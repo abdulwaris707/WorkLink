@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, desc, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { z } from "zod";
+
+const patchNotificationSchema = z.object({
+  notificationId: z.string().uuid().optional(),
+  markAll: z.boolean().optional(),
+});
 
 export async function GET() {
   try {
@@ -9,10 +16,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
+    const notifications = await db.query.notifications.findMany({
+      where: eq(schema.notifications.userId, user.id),
+      orderBy: [desc(schema.notifications.createdAt)],
+      limit: 20,
     });
 
     return NextResponse.json({ notifications });
@@ -30,18 +37,33 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { notificationId, markAll } = body;
+    const parsed = patchNotificationSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data", details: parsed.error.format() }, { status: 400 });
+    }
+
+    const { notificationId, markAll } = parsed.data;
 
     if (markAll) {
-      await prisma.notification.updateMany({
-        where: { userId: user.id, isRead: false },
-        data: { isRead: true },
-      });
+      await db
+        .update(schema.notifications)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(schema.notifications.userId, user.id),
+            eq(schema.notifications.isRead, false)
+          )
+        );
     } else if (notificationId) {
-      await prisma.notification.update({
-        where: { id: notificationId, userId: user.id },
-        data: { isRead: true },
-      });
+      await db
+        .update(schema.notifications)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(schema.notifications.id, notificationId),
+            eq(schema.notifications.userId, user.id)
+          )
+        );
     }
 
     return NextResponse.json({ success: true });

@@ -109,7 +109,7 @@ export default function WorkerReviewsPage() {
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
-                  "{rev.comment}"
+                  &ldquo;{rev.comment}&rdquo;
                 </p>
 
                 {rev.workerResponse ? (

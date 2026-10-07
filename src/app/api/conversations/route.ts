@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, or, and, desc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { createConversationSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -9,14 +11,15 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const conversations = await prisma.conversation.findMany({
-      where: {
-        OR: [{ clientId: user.id }, { workerId: user.id }],
-      },
-      orderBy: { updatedAt: "desc" },
-      include: {
+    const conversations = await db.query.conversations.findMany({
+      where: or(
+        eq(schema.conversations.clientId, user.id),
+        eq(schema.conversations.workerId, user.id)
+      ),
+      orderBy: [desc(schema.conversations.updatedAt)],
+      with: {
         client: {
-          select: {
+          columns: {
             id: true,
             name: true,
             avatarUrl: true,
@@ -24,12 +27,14 @@ export async function GET() {
           },
         },
         worker: {
-          select: {
+          columns: {
             id: true,
             name: true,
             avatarUrl: true,
+          },
+          with: {
             workerProfile: {
-              select: {
+              columns: {
                 category: true,
                 slug: true,
               },
@@ -37,13 +42,15 @@ export async function GET() {
           },
         },
         booking: {
-          select: {
+          columns: {
             id: true,
             status: true,
             bookingDate: true,
             timeSlot: true,
+          },
+          with: {
             service: {
-              select: {
+              columns: {
                 title: true,
                 price: true,
               },
@@ -51,18 +58,8 @@ export async function GET() {
           },
         },
         messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-        _count: {
-          select: {
-            messages: {
-              where: {
-                senderId: { not: user.id },
-                isRead: false,
-              },
-            },
-          },
+          orderBy: [desc(schema.messages.createdAt)],
+          limit: 1,
         },
       },
     });
@@ -82,48 +79,84 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { targetUserId, bookingId, initialMessage } = body;
+    const parsed = createConversationSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data", details: parsed.error.format() }, { status: 400 });
+    }
 
-    if (!targetUserId) {
-      return NextResponse.json({ error: "Target user ID is required" }, { status: 400 });
+    const { targetUserId, bookingId, initialMessage } = parsed.data;
+
+    if (user.id === targetUserId) {
+      return NextResponse.json({ error: "Cannot start a conversation with yourself" }, { status: 400 });
+    }
+
+    // Role check: Only clients can initiate new conversations with workers
+    if (user.role === "WORKER") {
+      // Check if there is an existing conversation or booking
+      const existingConv = await db.query.conversations.findFirst({
+        where: and(
+          eq(schema.conversations.workerId, user.id),
+          eq(schema.conversations.clientId, targetUserId)
+        ),
+      });
+
+      if (!existingConv && !bookingId) {
+        return NextResponse.json(
+          { error: "Workers cannot initiate new conversations with clients without an active booking" },
+          { status: 403 }
+        );
+      }
     }
 
     const isClient = user.role === "CLIENT";
     const clientId = isClient ? user.id : targetUserId;
     const workerId = isClient ? targetUserId : user.id;
 
+    // Verify worker exists and has WORKER role
+    const targetUser = await db.query.users.findFirst({
+      where: eq(schema.users.id, targetUserId),
+    });
+    if (!targetUser) {
+      return NextResponse.json({ error: "Recipient user not found" }, { status: 404 });
+    }
+
     // Check if conversation already exists
-    let conversation = await prisma.conversation.findFirst({
-      where: {
-        clientId,
-        workerId,
-      },
+    let conversation = await db.query.conversations.findFirst({
+      where: and(
+        eq(schema.conversations.clientId, clientId),
+        eq(schema.conversations.workerId, workerId)
+      ),
     });
 
     if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: {
+      const [newConv] = await db
+        .insert(schema.conversations)
+        .values({
           clientId,
           workerId,
           bookingId: bookingId || null,
-          ...(initialMessage && {
-            messages: {
-              create: {
-                senderId: user.id,
-                content: initialMessage.trim(),
-              },
-            },
-          }),
-        },
-      });
-    } else if (initialMessage) {
-      await prisma.message.create({
-        data: {
+        })
+        .returning();
+      conversation = newConv;
+
+      if (initialMessage && initialMessage.trim()) {
+        await db.insert(schema.messages).values({
           conversationId: conversation.id,
           senderId: user.id,
           content: initialMessage.trim(),
-        },
+        });
+      }
+    } else if (initialMessage && initialMessage.trim()) {
+      await db.insert(schema.messages).values({
+        conversationId: conversation.id,
+        senderId: user.id,
+        content: initialMessage.trim(),
       });
+
+      await db
+        .update(schema.conversations)
+        .set({ updatedAt: new Date() })
+        .where(eq(schema.conversations.id, conversation.id));
     }
 
     return NextResponse.json({ success: true, conversationId: conversation.id });

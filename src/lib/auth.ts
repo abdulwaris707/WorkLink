@@ -1,11 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { prisma } from "./prisma";
+import { db, schema } from "./db";
+import { eq } from "drizzle-orm";
 import { SessionUser } from "./types";
 
-const JWT_SECRET = process.env.JWT_SECRET || "worklink-super-secret-jwt-key-production-ready-min-32-chars";
-const secretKey = new TextEncoder().encode(JWT_SECRET);
+const AUTH_SECRET =
+  process.env.AUTH_SECRET ||
+  process.env.JWT_SECRET ||
+  "worklink-super-secret-jwt-key-production-ready-min-32-chars";
+
+const secretKey = new TextEncoder().encode(AUTH_SECRET);
 export const SESSION_COOKIE_NAME = "worklink_session";
 
 export async function hashPassword(password: string): Promise<string> {
@@ -52,18 +57,19 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     const session = await verifySession(token);
     if (!session?.id) return null;
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        phone: true,
-        location: true,
-        avatarUrl: true,
-      },
-    });
+    const [user] = await db
+      .select({
+        id: schema.users.id,
+        email: schema.users.email,
+        name: schema.users.name,
+        role: schema.users.role,
+        phone: schema.users.phone,
+        location: schema.users.location,
+        avatarUrl: schema.users.avatarUrl,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, session.id))
+      .limit(1);
 
     if (!user) return null;
     return user as SessionUser;

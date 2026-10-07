@@ -212,7 +212,7 @@ export default function WorkerOverviewPage() {
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-2 bg-white/80 p-2.5 rounded-lg border border-slate-200/70">
-                        "{req.requestDetails}"
+                        &ldquo;{req.requestDetails}&rdquo;
                       </p>
                     </div>
                   </div>

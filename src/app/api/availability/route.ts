@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, or, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { updateAvailabilitySchema } from "@/lib/validations";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,15 +14,18 @@ export async function GET(req: NextRequest) {
     let targetWorkerProfileId: string | null = null;
 
     if (workerId) {
-      const profile = await prisma.workerProfile.findFirst({
-        where: { OR: [{ id: workerId }, { userId: workerId }] },
+      const profile = await db.query.workerProfiles.findFirst({
+        where: or(
+          eq(schema.workerProfiles.id, workerId),
+          eq(schema.workerProfiles.userId, workerId)
+        ),
       });
       targetWorkerProfileId = profile?.id || null;
     } else {
       const user = await getCurrentUser();
       if (user && user.role === "WORKER") {
-        const profile = await prisma.workerProfile.findUnique({
-          where: { userId: user.id },
+        const profile = await db.query.workerProfiles.findFirst({
+          where: eq(schema.workerProfiles.userId, user.id),
         });
         targetWorkerProfileId = profile?.id || null;
       }
@@ -28,9 +35,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ schedule: [] });
     }
 
-    const schedule = await prisma.availability.findMany({
-      where: { workerProfileId: targetWorkerProfileId },
-      orderBy: { dayOfWeek: "asc" },
+    const schedule = await db.query.availability.findMany({
+      where: eq(schema.availability.workerProfileId, targetWorkerProfileId),
+      orderBy: [asc(schema.availability.dayOfWeek)],
     });
 
     return NextResponse.json({ schedule });
@@ -47,8 +54,8 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workerProfile = await prisma.workerProfile.findUnique({
-      where: { userId: user.id },
+    const workerProfile = await db.query.workerProfiles.findFirst({
+      where: eq(schema.workerProfiles.userId, user.id),
     });
 
     if (!workerProfile) {
@@ -56,31 +63,38 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { slots, isAvailable } = body;
+    const parsed = updateAvailabilitySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data", details: parsed.error.format() }, { status: 400 });
+    }
+
+    const { slots, isAvailable } = parsed.data;
 
     if (isAvailable !== undefined) {
-      await prisma.workerProfile.update({
-        where: { id: workerProfile.id },
-        data: { isAvailable: Boolean(isAvailable) },
-      });
+      await db
+        .update(schema.workerProfiles)
+        .set({ isAvailable: Boolean(isAvailable), updatedAt: new Date() })
+        .where(eq(schema.workerProfiles.id, workerProfile.id));
     }
 
     if (Array.isArray(slots)) {
-      // Re-create schedule slots
-      await prisma.availability.deleteMany({
-        where: { workerProfileId: workerProfile.id },
-      });
+      // Clear existing availability slots
+      await db
+        .delete(schema.availability)
+        .where(eq(schema.availability.workerProfileId, workerProfile.id));
 
-      await prisma.availability.createMany({
-        data: slots.map((s: any) => ({
-          workerProfileId: workerProfile.id,
-          dayOfWeek: s.dayOfWeek !== undefined ? parseInt(s.dayOfWeek) : null,
-          startTime: s.startTime || "09:00",
-          endTime: s.endTime || "17:00",
-          isBlocked: Boolean(s.isBlocked),
-          blockedDate: s.blockedDate ? new Date(s.blockedDate) : null,
-        })),
-      });
+      if (slots.length > 0) {
+        await db.insert(schema.availability).values(
+          slots.map((s) => ({
+            workerProfileId: workerProfile.id,
+            dayOfWeek: s.dayOfWeek !== undefined ? s.dayOfWeek : null,
+            startTime: s.startTime || "09:00",
+            endTime: s.endTime || "17:00",
+            isBlocked: Boolean(s.isBlocked),
+            blockedDate: s.blockedDate ? new Date(s.blockedDate) : null,
+          }))
+        );
+      }
     }
 
     return NextResponse.json({ success: true });

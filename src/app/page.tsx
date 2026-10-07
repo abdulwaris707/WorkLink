@@ -23,7 +23,7 @@ import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
 import { WorkerCard } from "@/components/workers/WorkerCard";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -32,32 +32,34 @@ export default async function HomePage() {
   const currentUser = await getCurrentUser();
 
   // Fetch top 3 verified workers for the featured section directly from DB
-  const featuredWorkers = await prisma.workerProfile.findMany({
-    where: {
-      isPublished: true,
-      user: { role: "WORKER" },
-    },
-    take: 3,
-    orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatarUrl: true,
-          location: true,
+  let featuredWorkers: any[] = [];
+  try {
+    featuredWorkers = await db.query.workerProfiles.findMany({
+      where: (wp, { eq }) => eq(wp.isPublished, true),
+      limit: 3,
+      orderBy: (wp, { desc }) => [desc(wp.rating), desc(wp.reviewCount)],
+      with: {
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            location: true,
+          },
+        },
+        services: {
+          where: (s, { eq }) => eq(s.isActive, true),
+          columns: {
+            id: true,
+            title: true,
+            price: true,
+          },
         },
       },
-      services: {
-        where: { isActive: true },
-        select: {
-          id: true,
-          title: true,
-          price: true,
-        },
-      },
-    },
-  });
+    });
+  } catch {
+    featuredWorkers = [];
+  }
 
   const categories = [
     { name: "Home Services", icon: Zap, count: "120+ pros", color: "bg-blue-50 text-blue-600 border-blue-200" },

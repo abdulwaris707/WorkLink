@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, and, not, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { sendMessageSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -11,23 +13,25 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const { id } = params;
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      include: {
+    const conversation = await db.query.conversations.findFirst({
+      where: eq(schema.conversations.id, id),
+      with: {
         client: {
-          select: { id: true, name: true, avatarUrl: true },
+          columns: { id: true, name: true, avatarUrl: true },
         },
         worker: {
-          select: { id: true, name: true, avatarUrl: true },
+          columns: { id: true, name: true, avatarUrl: true },
         },
         booking: {
-          select: {
+          columns: {
             id: true,
             status: true,
             bookingDate: true,
             timeSlot: true,
             quotedPrice: true,
-            service: { select: { title: true } },
+          },
+          with: {
+            service: { columns: { title: true } },
           },
         },
       },
@@ -37,26 +41,29 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
+    // Authorization: User cannot access another user's private messages
     if (conversation.clientId !== user.id && conversation.workerId !== user.id && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden: Cannot access other users' conversations" }, { status: 403 });
     }
 
     // Mark messages from other user as read
-    await prisma.message.updateMany({
-      where: {
-        conversationId: id,
-        senderId: { not: user.id },
-        isRead: false,
-      },
-      data: { isRead: true },
-    });
+    await db
+      .update(schema.messages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(schema.messages.conversationId, id),
+          not(eq(schema.messages.senderId, user.id)),
+          eq(schema.messages.isRead, false)
+        )
+      );
 
-    const messages = await prisma.message.findMany({
-      where: { conversationId: id },
-      orderBy: { createdAt: "asc" },
-      include: {
+    const messages = await db.query.messages.findMany({
+      where: eq(schema.messages.conversationId, id),
+      orderBy: [asc(schema.messages.createdAt)],
+      with: {
         sender: {
-          select: { id: true, name: true, avatarUrl: true },
+          columns: { id: true, name: true, avatarUrl: true },
         },
       },
     });
@@ -77,58 +84,62 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const { id } = params;
     const body = await req.json();
-    const { content } = body;
-
-    if (!content || !content.trim()) {
-      return NextResponse.json({ error: "Message content cannot be empty" }, { status: 400 });
+    const parsed = sendMessageSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid message data", details: parsed.error.format() }, { status: 400 });
     }
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      include: { client: true, worker: true },
+    const { content } = parsed.data;
+
+    const conversation = await db.query.conversations.findFirst({
+      where: eq(schema.conversations.id, id),
     });
 
     if (!conversation) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
+    // Authorization: User cannot access another user's private messages
     if (conversation.clientId !== user.id && conversation.workerId !== user.id && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden: Cannot send messages in this conversation" }, { status: 403 });
     }
 
     const recipientId = conversation.clientId === user.id ? conversation.workerId : conversation.clientId;
 
-    const message = await prisma.message.create({
-      data: {
+    const [message] = await db
+      .insert(schema.messages)
+      .values({
         conversationId: id,
         senderId: user.id,
         content: content.trim(),
-      },
-      include: {
+      })
+      .returning();
+
+    // Update conversation timestamp
+    await db
+      .update(schema.conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(schema.conversations.id, id));
+
+    // Notify recipient
+    await db.insert(schema.notifications).values({
+      userId: recipientId,
+      title: `New message from ${user.name}`,
+      message: content.length > 80 ? `${content.substring(0, 80)}...` : content,
+      type: "NEW_MESSAGE",
+      link: user.role === "CLIENT" ? "/worker/messages" : "/client/messages",
+    });
+
+    const fullMessage = await db.query.messages.findFirst({
+      where: eq(schema.messages.id, message.id),
+      with: {
         sender: {
-          select: { id: true, name: true, avatarUrl: true },
+          columns: { id: true, name: true, avatarUrl: true },
         },
       },
     });
 
-    // Update conversation timestamp
-    await prisma.conversation.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    });
-
-    // Notify recipient
-    await prisma.notification.create({
-      data: {
-        userId: recipientId,
-        title: `New message from ${user.name}`,
-        message: content.length > 80 ? `${content.substring(0, 80)}...` : content,
-        type: "NEW_MESSAGE",
-        link: user.role === "CLIENT" ? "/worker/messages" : "/client/messages",
-      },
-    });
-
-    return NextResponse.json({ success: true, message });
+    return NextResponse.json({ success: true, message: fullMessage });
   } catch (error: any) {
     console.error("Send message error:", error);
     return NextResponse.json({ error: "Failed to send message" }, { status: 500 });

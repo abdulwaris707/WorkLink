@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { createReviewSchema, reviewResponseSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,17 +12,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { bookingId, rating, comment } = body;
-
-    if (!bookingId || !rating || !comment) {
-      return NextResponse.json({ error: "Booking ID, rating (1-5), and review text are required" }, { status: 400 });
+    const parsed = createReviewSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid review data", details: parsed.error.format() }, { status: 400 });
     }
 
-    const numericRating = Math.min(5, Math.max(1, parseInt(rating)));
+    const { bookingId, rating, comment } = parsed.data;
 
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { review: true, service: true, worker: true },
+    const booking = await db.query.bookings.findFirst({
+      where: eq(schema.bookings.id, bookingId),
+      with: { review: true, service: true, worker: true },
     });
 
     if (!booking) {
@@ -40,52 +41,64 @@ export async function POST(req: NextRequest) {
     }
 
     // Create review
-    const review = await prisma.review.create({
-      data: {
+    const [review] = await db
+      .insert(schema.reviews)
+      .values({
         bookingId: booking.id,
         clientId: user.id,
         workerId: booking.workerId,
-        rating: numericRating,
+        rating,
         comment: comment.trim(),
         isVerified: true,
-      },
-      include: {
-        client: {
-          select: { id: true, name: true, avatarUrl: true },
-        },
-      },
-    });
+      })
+      .returning();
 
     // Recalculate worker average rating
-    const workerReviews = await prisma.review.findMany({
-      where: { workerId: booking.workerId },
-      select: { rating: true },
+    const workerReviews = await db.query.reviews.findMany({
+      where: eq(schema.reviews.workerId, booking.workerId),
+      columns: { rating: true },
     });
 
     const totalCount = workerReviews.length;
     const avgRating =
       workerReviews.reduce((sum, r) => sum + r.rating, 0) / (totalCount || 1);
 
-    await prisma.workerProfile.update({
-      where: { userId: booking.workerId },
-      data: {
+    await db
+      .update(schema.workerProfiles)
+      .set({
         rating: parseFloat(avgRating.toFixed(2)),
         reviewCount: totalCount,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.workerProfiles.userId, booking.workerId));
 
     // Notify worker
-    await prisma.notification.create({
-      data: {
-        userId: booking.workerId,
-        title: "New Review Received",
-        message: `${user.name} gave you a ${numericRating}-star review for "${booking.service.title}".`,
-        type: "REVIEW_RECEIVED",
-        link: "/worker/reviews",
+    await db.insert(schema.notifications).values({
+      userId: booking.workerId,
+      title: "New Review Received",
+      message: `${user.name} gave you a ${rating}-star review for "${booking.service.title}".`,
+      type: "REVIEW_RECEIVED",
+      link: "/worker/reviews",
+    });
+
+    // Log booking activity
+    await db.insert(schema.bookingActivity).values({
+      bookingId: booking.id,
+      actorId: user.id,
+      action: "REVIEW_SUBMITTED",
+      details: `Client submitted a ${rating}-star review`,
+    });
+
+    const fullReview = await db.query.reviews.findFirst({
+      where: eq(schema.reviews.id, review.id),
+      with: {
+        client: {
+          columns: { id: true, name: true, avatarUrl: true },
+        },
       },
     });
 
-    return NextResponse.json({ success: true, review });
+    return NextResponse.json({ success: true, review: fullReview });
   } catch (error: any) {
     console.error("Create review error:", error);
     return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
@@ -100,24 +113,29 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { reviewId, response } = body;
-
-    if (!reviewId || !response) {
-      return NextResponse.json({ error: "Review ID and response text are required" }, { status: 400 });
+    const parsed = reviewResponseSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data", details: parsed.error.format() }, { status: 400 });
     }
 
-    const review = await prisma.review.findUnique({
-      where: { id: reviewId },
+    const { reviewId, response } = parsed.data;
+
+    const review = await db.query.reviews.findFirst({
+      where: eq(schema.reviews.id, reviewId),
     });
 
     if (!review || review.workerId !== user.id) {
       return NextResponse.json({ error: "Review not found or unauthorized" }, { status: 403 });
     }
 
-    const updated = await prisma.review.update({
-      where: { id: reviewId },
-      data: { workerResponse: response.trim() },
-    });
+    const [updated] = await db
+      .update(schema.reviews)
+      .set({
+        workerResponse: response.trim(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.reviews.id, reviewId))
+      .returning();
 
     return NextResponse.json({ success: true, review: updated });
   } catch (error: any) {

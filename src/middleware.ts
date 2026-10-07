@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET || "worklink-super-secret-jwt-key-production-ready-min-32-chars";
-const secretKey = new TextEncoder().encode(JWT_SECRET);
+const AUTH_SECRET =
+  process.env.AUTH_SECRET ||
+  process.env.JWT_SECRET ||
+  "worklink-super-secret-jwt-key-production-ready-min-32-chars";
+const secretKey = new TextEncoder().encode(AUTH_SECRET);
 const SESSION_COOKIE_NAME = "worklink_session";
 
 export async function middleware(request: NextRequest) {

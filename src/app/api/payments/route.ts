@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, desc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { processPaymentSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -9,22 +11,24 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const where = user.role === "WORKER" ? { workerId: user.id } : { clientId: user.id };
+    const where = user.role === "WORKER" 
+      ? eq(schema.payments.workerId, user.id) 
+      : eq(schema.payments.clientId, user.id);
 
-    const payments = await prisma.payment.findMany({
+    const payments = await db.query.payments.findMany({
       where,
-      orderBy: { createdAt: "desc" },
-      include: {
+      orderBy: [desc(schema.payments.createdAt)],
+      with: {
         booking: {
-          include: {
+          with: {
             service: true,
           },
         },
         client: {
-          select: { id: true, name: true, email: true },
+          columns: { id: true, name: true, email: true },
         },
         worker: {
-          select: { id: true, name: true, email: true },
+          columns: { id: true, name: true, email: true },
         },
       },
     });
@@ -44,15 +48,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { bookingId, cardNumber, cardExpiry, cardCvc } = body;
-
-    if (!bookingId) {
-      return NextResponse.json({ error: "Booking ID is required" }, { status: 400 });
+    const parsed = processPaymentSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payment details", details: parsed.error.format() }, { status: 400 });
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { service: true, worker: true },
+    const { bookingId, cardNumber } = parsed.data;
+
+    const booking = await db.query.bookings.findFirst({
+      where: eq(schema.bookings.id, bookingId),
+      with: { service: true, worker: true },
     });
 
     if (!booking) {
@@ -67,8 +72,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This booking has already been paid" }, { status: 400 });
     }
 
-    // In production without live Stripe secret keys, we validate mock test card format
-    // e.g., 4242 4242 4242 4242
     const cleanCard = (cardNumber || "").replace(/\s+/g, "");
     if (cleanCard.length < 13 && cleanCard !== "4242424242424242") {
       return NextResponse.json({ error: "Please enter a valid card number (or use test 4242...)" }, { status: 400 });
@@ -76,35 +79,45 @@ export async function POST(req: NextRequest) {
 
     const providerPaymentId = `ch_test_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
-    // Atomic transaction: create payment & update booking
-    const [payment, updatedBooking] = await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          bookingId: booking.id,
-          clientId: user.id,
-          workerId: booking.workerId,
-          amount: booking.quotedPrice,
-          currency: "USD",
-          provider: "stripe_test",
-          providerPaymentId,
-          status: "PAID",
-        },
-      }),
-      prisma.booking.update({
-        where: { id: booking.id },
-        data: { paymentStatus: "PAID" },
-      }),
-    ]);
+    const [payment] = await db
+      .insert(schema.payments)
+      .values({
+        bookingId: booking.id,
+        clientId: user.id,
+        workerId: booking.workerId,
+        amount: booking.quotedPrice,
+        currency: "USD",
+        provider: "stripe_test",
+        providerPaymentId,
+        status: "PAID",
+      })
+      .returning();
+
+    await db
+      .update(schema.bookings)
+      .set({ paymentStatus: "PAID", updatedAt: new Date() })
+      .where(eq(schema.bookings.id, booking.id));
 
     // Send notification to worker
-    await prisma.notification.create({
-      data: {
-        userId: booking.workerId,
-        title: "Payment Received",
-        message: `${user.name} paid $${booking.quotedPrice} for "${booking.service.title}".`,
-        type: "PAYMENT_UPDATE",
-        link: "/worker/earnings",
-      },
+    await db.insert(schema.notifications).values({
+      userId: booking.workerId,
+      title: "Payment Received",
+      message: `${user.name} paid $${booking.quotedPrice} for "${booking.service.title}".`,
+      type: "PAYMENT_UPDATE",
+      link: "/worker/earnings",
+    });
+
+    // Log booking activity
+    await db.insert(schema.bookingActivity).values({
+      bookingId: booking.id,
+      actorId: user.id,
+      action: "PAYMENT_COMPLETED",
+      details: `Payment of $${booking.quotedPrice} completed via stripe_test`,
+    });
+
+    const updatedBooking = await db.query.bookings.findFirst({
+      where: eq(schema.bookings.id, booking.id),
+      with: { service: true, worker: true, payment: true },
     });
 
     return NextResponse.json({ success: true, payment, booking: updatedBooking });

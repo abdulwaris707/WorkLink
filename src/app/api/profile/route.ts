@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { updateProfileSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -9,11 +11,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const fullProfile = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
+    const fullProfile = await db.query.users.findFirst({
+      where: eq(schema.users.id, user.id),
+      with: {
         workerProfile: {
-          include: {
+          with: {
             services: true,
             availability: true,
           },
@@ -37,6 +39,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parsed = updateProfileSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid profile data", details: parsed.error.format() }, { status: 400 });
+    }
+
     const {
       name,
       phone,
@@ -52,65 +59,104 @@ export async function PATCH(req: NextRequest) {
       responseTime,
       isAvailable,
       portfolioImages,
-    } = body;
+    } = parsed.data;
 
     // Update base user
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        ...(name && { name: name.trim() }),
-        ...(phone !== undefined && { phone }),
-        ...(location !== undefined && { location }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
-      },
-    });
+    const userUpdateData: Partial<typeof schema.users.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+    if (name) userUpdateData.name = name.trim();
+    if (phone !== undefined) userUpdateData.phone = phone;
+    if (location !== undefined) userUpdateData.location = location;
+    if (avatarUrl !== undefined) userUpdateData.avatarUrl = avatarUrl;
 
-    // If worker, update worker profile
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set(userUpdateData)
+      .where(eq(schema.users.id, user.id))
+      .returning();
+
+    // If worker, upsert worker profile
     if (user.role === "WORKER") {
-      await prisma.workerProfile.upsert({
-        where: { userId: user.id },
-        update: {
-          ...(bio !== undefined && { bio }),
-          ...(category && { category }),
-          ...(skills && Array.isArray(skills) && { skills }),
-          ...(hourlyRate !== undefined && { hourlyRate: parseFloat(hourlyRate) }),
-          ...(startingPrice !== undefined && { startingPrice: parseFloat(startingPrice) }),
-          ...(experienceYears !== undefined && { experienceYears: parseInt(experienceYears) }),
-          ...(serviceArea !== undefined && { serviceArea }),
-          ...(responseTime !== undefined && { responseTime }),
-          ...(isAvailable !== undefined && { isAvailable: Boolean(isAvailable) }),
-          ...(portfolioImages && Array.isArray(portfolioImages) && { portfolioImages }),
-        },
-        create: {
-          userId: user.id,
-          slug: `${user.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Math.floor(1000 + Math.random() * 9000)}`,
-          category: category || "Home Services",
-          skills: skills || [],
-          hourlyRate: hourlyRate ? parseFloat(hourlyRate) : 50,
-          startingPrice: startingPrice ? parseFloat(startingPrice) : 50,
-          experienceYears: experienceYears ? parseInt(experienceYears) : 1,
-          serviceArea: serviceArea || "Metro Area",
-          bio: bio || "",
-        },
+      const existingWorker = await db.query.workerProfiles.findFirst({
+        where: eq(schema.workerProfiles.userId, user.id),
       });
+
+      const effectiveBio = bio ?? existingWorker?.bio ?? "";
+      const effectiveCategory = category ?? existingWorker?.category ?? "Home Services";
+      const effectiveSkills = skills ?? existingWorker?.skills ?? [];
+      const effectiveStartingPrice = startingPrice ?? existingWorker?.startingPrice ?? 50;
+
+      // Rule: Worker only becomes visible in public directory when profile is complete
+      const isProfileComplete = 
+        Boolean(effectiveBio && effectiveBio.trim().length >= 10) &&
+        Boolean(effectiveCategory) &&
+        Boolean(effectiveSkills && effectiveSkills.length > 0) &&
+        Boolean(effectiveStartingPrice > 0);
+
+      if (existingWorker) {
+        const workerUpdateData: Partial<typeof schema.workerProfiles.$inferInsert> = {
+          updatedAt: new Date(),
+          isPublished: isProfileComplete,
+        };
+        if (bio !== undefined) workerUpdateData.bio = bio;
+        if (category !== undefined) workerUpdateData.category = category;
+        if (skills !== undefined) workerUpdateData.skills = skills;
+        if (hourlyRate !== undefined) workerUpdateData.hourlyRate = hourlyRate;
+        if (startingPrice !== undefined) workerUpdateData.startingPrice = startingPrice;
+        if (experienceYears !== undefined) workerUpdateData.experienceYears = experienceYears;
+        if (serviceArea !== undefined) workerUpdateData.serviceArea = serviceArea;
+        if (responseTime !== undefined) workerUpdateData.responseTime = responseTime;
+        if (isAvailable !== undefined) workerUpdateData.isAvailable = isAvailable;
+        if (portfolioImages !== undefined) workerUpdateData.portfolioImages = portfolioImages;
+
+        await db
+          .update(schema.workerProfiles)
+          .set(workerUpdateData)
+          .where(eq(schema.workerProfiles.id, existingWorker.id));
+      } else {
+        const baseSlug = (user.name || "worker").toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const uniqueSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        await db.insert(schema.workerProfiles).values({
+          userId: user.id,
+          slug: uniqueSlug,
+          category: effectiveCategory,
+          skills: effectiveSkills,
+          hourlyRate: hourlyRate ?? 50,
+          startingPrice: effectiveStartingPrice,
+          experienceYears: experienceYears ?? 1,
+          serviceArea: serviceArea ?? "Metro Area",
+          bio: effectiveBio,
+          isPublished: isProfileComplete,
+        });
+      }
     }
 
-    // If client, update client profile
+    // If client, upsert client profile
     if (user.role === "CLIENT") {
-      await prisma.clientProfile.upsert({
-        where: { userId: user.id },
-        update: {
-          ...(phone !== undefined && { phone }),
-          ...(location !== undefined && { location }),
-          ...(avatarUrl !== undefined && { avatarUrl }),
-        },
-        create: {
+      const existingClient = await db.query.clientProfiles.findFirst({
+        where: eq(schema.clientProfiles.userId, user.id),
+      });
+
+      if (existingClient) {
+        await db
+          .update(schema.clientProfiles)
+          .set({
+            phone: phone !== undefined ? phone : existingClient.phone,
+            location: location !== undefined ? location : existingClient.location,
+            avatarUrl: avatarUrl !== undefined ? avatarUrl : existingClient.avatarUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.clientProfiles.id, existingClient.id));
+      } else {
+        await db.insert(schema.clientProfiles).values({
           userId: user.id,
           phone: phone || null,
           location: location || null,
           avatarUrl: avatarUrl || null,
-        },
-      });
+        });
+      }
     }
 
     return NextResponse.json({ success: true, user: updatedUser });

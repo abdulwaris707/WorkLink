@@ -42,7 +42,7 @@ export default function ClientReviewsPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-navy-900">My Reviews & Ratings</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Verified feedback you've left for service professionals.
+            Verified feedback you&apos;ve left for service professionals.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export default function ClientReviewsPage() {
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  "{rev.comment}"
+                  &ldquo;{rev.comment}&rdquo;
                 </p>
 
                 {rev.workerResponse && (

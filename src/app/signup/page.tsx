@@ -90,7 +90,7 @@ function SignupForm() {
               role === "CLIENT" ? "text-primary-600" : "text-slate-400"
             }`}
           />
-          <p className="text-xs font-bold text-navy-900">I'm a Client</p>
+          <p className="text-xs font-bold text-navy-900">I&apos;m a Client</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Looking to hire skilled pros</p>
         </button>
 
@@ -108,7 +108,7 @@ function SignupForm() {
               role === "WORKER" ? "text-primary-600" : "text-slate-400"
             }`}
           />
-          <p className="text-xs font-bold text-navy-900">I'm a Worker</p>
+          <p className="text-xs font-bold text-navy-900">I&apos;m a Worker</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Offer services & find jobs</p>
         </button>
       </div>

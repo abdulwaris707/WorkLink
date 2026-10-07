@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, desc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { createServiceSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,11 +11,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workerProfile = await prisma.workerProfile.findUnique({
-      where: { userId: user.id },
-      include: {
+    const workerProfile = await db.query.workerProfiles.findFirst({
+      where: eq(schema.workerProfiles.userId, user.id),
+      with: {
         services: {
-          orderBy: { createdAt: "desc" },
+          orderBy: [desc(schema.services.createdAt)],
         },
       },
     });
@@ -36,8 +38,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workerProfile = await prisma.workerProfile.findUnique({
-      where: { userId: user.id },
+    const workerProfile = await db.query.workerProfiles.findFirst({
+      where: eq(schema.workerProfiles.userId, user.id),
     });
 
     if (!workerProfile) {
@@ -45,24 +47,26 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, description, category, durationMinutes, price, serviceArea } = body;
-
-    if (!title || !description || !price) {
-      return NextResponse.json({ error: "Title, description, and price are required" }, { status: 400 });
+    const parsed = createServiceSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid service data", details: parsed.error.format() }, { status: 400 });
     }
 
-    const service = await prisma.service.create({
-      data: {
+    const { title, description, category, durationMinutes, price, serviceArea } = parsed.data;
+
+    const [service] = await db
+      .insert(schema.services)
+      .values({
         workerProfileId: workerProfile.id,
         title: title.trim(),
         description: description.trim(),
         category: category || workerProfile.category,
-        durationMinutes: parseInt(durationMinutes) || 60,
-        price: parseFloat(price),
+        durationMinutes: durationMinutes ?? 60,
+        price,
         serviceArea: serviceArea || workerProfile.serviceArea,
         isActive: true,
-      },
-    });
+      })
+      .returning();
 
     return NextResponse.json({ success: true, service });
   } catch (error: any) {

@@ -329,7 +329,7 @@ export default function ClientBookingsPage() {
         >
           <div className="space-y-4 pt-2">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Cancelling will release the worker's reserved time slot and notify both parties.
+              Cancelling will release the worker&apos;s reserved time slot and notify both parties.
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button

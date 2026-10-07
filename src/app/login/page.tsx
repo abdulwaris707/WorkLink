@@ -119,7 +119,7 @@ function LoginForm() {
       </div>
 
       <div className="mt-6 text-center text-xs text-slate-500">
-        Don't have an account yet?{" "}
+        Don&apos;t have an account yet?{" "}
         <Link href="/signup" className="font-semibold text-primary-600 hover:underline">
           Create an account
         </Link>

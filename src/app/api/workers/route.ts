@@ -1,105 +1,131 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, schema } from "@/lib/db";
+import { eq, and, gte, lte, ilike, or, desc, asc, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search")?.trim() || "";
     const category = searchParams.get("category") || "";
-    const location = searchParams.get("location") || "";
+    const location = searchParams.get("location")?.trim() || "";
     const minPrice = searchParams.get("minPrice") ? parseFloat(searchParams.get("minPrice")!) : undefined;
     const maxPrice = searchParams.get("maxPrice") ? parseFloat(searchParams.get("maxPrice")!) : undefined;
     const minRating = searchParams.get("minRating") ? parseFloat(searchParams.get("minRating")!) : undefined;
     const verifiedOnly = searchParams.get("verified") === "true";
     const sort = searchParams.get("sort") || "recommended";
 
-    const where: any = {
-      isPublished: true,
-      user: {
-        role: "WORKER",
-      },
-    };
+    const conditions = [
+      eq(schema.workerProfiles.isPublished, true),
+      eq(schema.users.role, "WORKER"),
+    ];
 
     if (category && category !== "All") {
-      where.category = { equals: category, mode: "insensitive" };
+      conditions.push(ilike(schema.workerProfiles.category, `%${category}%`));
     }
 
     if (verifiedOnly) {
-      where.isVerified = true;
+      conditions.push(eq(schema.workerProfiles.isVerified, true));
     }
 
     if (minRating) {
-      where.rating = { gte: minRating };
+      conditions.push(gte(schema.workerProfiles.rating, minRating));
     }
 
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.startingPrice = {};
-      if (minPrice !== undefined) where.startingPrice.gte = minPrice;
-      if (maxPrice !== undefined) where.startingPrice.lte = maxPrice;
+    if (minPrice !== undefined) {
+      conditions.push(gte(schema.workerProfiles.startingPrice, minPrice));
+    }
+    if (maxPrice !== undefined) {
+      conditions.push(lte(schema.workerProfiles.startingPrice, maxPrice));
     }
 
     if (location) {
-      where.OR = [
-        { serviceArea: { contains: location, mode: "insensitive" } },
-        { user: { location: { contains: location, mode: "insensitive" } } },
-      ];
+      conditions.push(
+        or(
+          ilike(schema.workerProfiles.serviceArea, `%${location}%`),
+          ilike(schema.users.location, `%${location}%`)
+        )!
+      );
     }
 
     if (search) {
-      where.AND = [
-        {
-          OR: [
-            { user: { name: { contains: search, mode: "insensitive" } } },
-            { bio: { contains: search, mode: "insensitive" } },
-            { category: { contains: search, mode: "insensitive" } },
-            { skills: { hasSome: [search] } },
-            { services: { some: { title: { contains: search, mode: "insensitive" } } } },
-          ],
-        },
-      ];
+      conditions.push(
+        or(
+          ilike(schema.users.name, `%${search}%`),
+          ilike(schema.workerProfiles.bio, `%${search}%`),
+          ilike(schema.workerProfiles.category, `%${search}%`),
+          sql`${schema.workerProfiles.skills}::text ILIKE ${`%${search}%`}`
+        )!
+      );
     }
 
-    let orderBy: any = {};
+    let orderByClause: any = desc(schema.workerProfiles.rating);
     if (sort === "highest_rated") {
-      orderBy = { rating: "desc" };
+      orderByClause = desc(schema.workerProfiles.rating);
     } else if (sort === "lowest_price") {
-      orderBy = { startingPrice: "asc" };
+      orderByClause = asc(schema.workerProfiles.startingPrice);
     } else if (sort === "newest") {
-      orderBy = { createdAt: "desc" };
-    } else {
-      // Recommended: high rating & review count
-      orderBy = [{ rating: "desc" }, { reviewCount: "desc" }];
+      orderByClause = desc(schema.workerProfiles.createdAt);
     }
 
-    const workers = await prisma.workerProfile.findMany({
-      where,
-      orderBy,
-      include: {
+    const profiles = await db
+      .select({
+        id: schema.workerProfiles.id,
+        userId: schema.workerProfiles.userId,
+        slug: schema.workerProfiles.slug,
+        bio: schema.workerProfiles.bio,
+        category: schema.workerProfiles.category,
+        skills: schema.workerProfiles.skills,
+        hourlyRate: schema.workerProfiles.hourlyRate,
+        startingPrice: schema.workerProfiles.startingPrice,
+        experienceYears: schema.workerProfiles.experienceYears,
+        serviceArea: schema.workerProfiles.serviceArea,
+        responseTime: schema.workerProfiles.responseTime,
+        isAvailable: schema.workerProfiles.isAvailable,
+        isVerified: schema.workerProfiles.isVerified,
+        rating: schema.workerProfiles.rating,
+        reviewCount: schema.workerProfiles.reviewCount,
+        portfolioImages: schema.workerProfiles.portfolioImages,
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            location: true,
-          },
+          id: schema.users.id,
+          name: schema.users.name,
+          email: schema.users.email,
+          avatarUrl: schema.users.avatarUrl,
+          location: schema.users.location,
         },
-        services: {
-          where: { isActive: true },
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            durationMinutes: true,
-            category: true,
-          },
-        },
-      },
-    });
+      })
+      .from(schema.workerProfiles)
+      .innerJoin(schema.users, eq(schema.workerProfiles.userId, schema.users.id))
+      .where(and(...conditions))
+      .orderBy(orderByClause);
 
-    return NextResponse.json({ workers });
-  } catch (error: any) {
-    console.error("Workers fetch error:", error);
+    // Attach active services for each worker profile
+    const workersWithServices = await Promise.all(
+      profiles.map(async (worker) => {
+        const workerServices = await db
+          .select({
+            id: schema.services.id,
+            title: schema.services.title,
+            price: schema.services.price,
+            durationMinutes: schema.services.durationMinutes,
+            category: schema.services.category,
+          })
+          .from(schema.services)
+          .where(
+            and(
+              eq(schema.services.workerProfileId, worker.id),
+              eq(schema.services.isActive, true)
+            )
+          );
+
+        return {
+          ...worker,
+          services: workerServices,
+        };
+      })
+    );
+
+    return NextResponse.json({ workers: workersWithServices });
+  } catch (error) {
     return NextResponse.json({ error: "Failed to fetch workers" }, { status: 500 });
   }
 }
