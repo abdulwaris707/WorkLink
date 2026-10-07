@@ -23,7 +23,7 @@ import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
 import { Modal } from "@/ui/Modal";
 import { Textarea } from "@/ui/Input";
-import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
+import { Avatar, Skeleton, EmptyState, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { useToast } from "@/ui/Toast";
 import { BookingDetailModal } from "@/components/dashboard/BookingDetailModal";
 import { formatCurrency, formatDate, parseDateParts, getStatusColor } from "@/lib/utils";
@@ -126,8 +126,12 @@ export default function WorkerBookingsPage() {
                 Accept requests, track job progression, coordinate entry, and mark work completed.
               </p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary-50 text-primary-700">
-              {filteredBookings.length} {filteredBookings.length === 1 ? "booking" : "bookings"}
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 min-w-[50px] inline-flex items-center justify-center">
+              {loading ? (
+                <CardTextLoader size="xs" />
+              ) : (
+                `${filteredBookings.length} ${filteredBookings.length === 1 ? "booking" : "bookings"}`
+              )}
             </span>
           </div>
 
@@ -151,9 +155,8 @@ export default function WorkerBookingsPage() {
 
         {/* Bookings List */}
         {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full rounded-2xl" />
-            <Skeleton className="h-32 w-full rounded-2xl" />
+          <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+            <CardLoader size="lg" text="Loading booking requests..." />
           </div>
         ) : filteredBookings.length === 0 ? (
           <Card className="p-8 text-center">

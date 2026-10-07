@@ -15,7 +15,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
-import { Skeleton, EmptyState } from "@/ui/Feedback";
+import { Skeleton, EmptyState, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function WorkerEarningsPage() {
@@ -56,7 +56,7 @@ export default function WorkerEarningsPage() {
               Total Revenue Paid
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(totalEarnings)}
+              {loading ? <CardTextLoader size="xs" /> : formatCurrency(totalEarnings)}
             </p>
             <span className="text-[11px] text-emerald-600 mt-1 block">
               Directly processed payments
@@ -68,7 +68,7 @@ export default function WorkerEarningsPage() {
               Pending Payouts
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-12" /> : formatCurrency(pendingEarnings)}
+              {loading ? <CardTextLoader size="xs" /> : formatCurrency(pendingEarnings)}
             </p>
             <span className="text-[11px] text-amber-600 mt-1 block">
               Pending release upon completion
@@ -109,9 +109,8 @@ export default function WorkerEarningsPage() {
           <h3 className="text-sm font-bold text-navy-900">Payment Breakdown</h3>
 
           {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 w-full rounded-2xl" />
-              <Skeleton className="h-16 w-full rounded-2xl" />
+            <div className="py-16 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+              <CardLoader size="lg" text="Loading payout transactions..." />
             </div>
           ) : payments.length === 0 ? (
             <Card className="p-8 text-center">

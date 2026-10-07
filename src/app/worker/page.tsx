@@ -24,7 +24,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
-import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
+import { Avatar, Skeleton, EmptyState, DotLoader, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 import { UpcomingAppointmentCard } from "@/components/dashboard/UpcomingAppointmentCard";
 
@@ -150,7 +150,16 @@ export default function WorkerOverviewPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">
-                {data.user?.name ? `Hello, ${data.user.name}` : "Worker Dashboard"}
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <DotLoader size="sm" inline />
+                    <span className="text-xs font-medium text-slate-500">Loading profile...</span>
+                  </span>
+                ) : data.user?.name ? (
+                  `Hello, ${data.user.name}`
+                ) : (
+                  "Worker Dashboard"
+                )}
               </h1>
               {verificationStatus === "approved" && (
                 <Badge variant="success" size="sm">
@@ -220,7 +229,7 @@ export default function WorkerOverviewPage() {
               New Requests
             </span>
             <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
-              {loading ? <Skeleton className="h-7 w-12" /> : pendingRequests.length}
+              {loading ? <CardTextLoader size="xs" /> : pendingRequests.length}
             </p>
             <span className="text-[10px] sm:text-[11px] text-amber-600 mt-0.5 block truncate">Awaiting response</span>
           </Card>
@@ -230,7 +239,7 @@ export default function WorkerOverviewPage() {
               Active / Scheduled
             </span>
             <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
-              {loading ? <Skeleton className="h-7 w-12" /> : upcomingJobs.length}
+              {loading ? <CardTextLoader size="xs" /> : upcomingJobs.length}
             </p>
             <span className="text-[10px] sm:text-[11px] text-primary-600 mt-0.5 block truncate">Upcoming appointments</span>
           </Card>
@@ -240,7 +249,7 @@ export default function WorkerOverviewPage() {
               Gross Earnings (Paid)
             </span>
             <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
-              {loading ? <Skeleton className="h-7 w-20" /> : formatCurrency(totalEarnings)}
+              {loading ? <CardTextLoader size="xs" /> : formatCurrency(totalEarnings)}
             </p>
             <span className="text-[11px] text-emerald-600 mt-1 block">
               {completedJobs.length} completed jobs
@@ -344,10 +353,9 @@ export default function WorkerOverviewPage() {
             </div>
 
             {loading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full rounded-2xl" />
-                <Skeleton className="h-20 w-full rounded-2xl" />
-              </div>
+              <Card className="p-8">
+                <CardLoader size="md" text="Loading scheduled jobs..." />
+              </Card>
             ) : upcomingJobs.length === 0 ? (
               <Card className="p-8 text-center">
                 <EmptyState
@@ -387,10 +395,7 @@ export default function WorkerOverviewPage() {
               </div>
 
               {loading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full rounded-xl" />
-                  <Skeleton className="h-12 w-full rounded-xl" />
-                </div>
+                <CardLoader size="sm" text="Loading inquiries..." />
               ) : data.conversations.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-6">No client messages</p>
               ) : (

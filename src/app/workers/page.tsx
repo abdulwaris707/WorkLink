@@ -19,7 +19,7 @@ import { WorkerCard } from "@/components/workers/WorkerCard";
 import { Button } from "@/ui/Button";
 import { Input } from "@/ui/Input";
 import { Badge } from "@/ui/Badge";
-import { Skeleton, EmptyState } from "@/ui/Feedback";
+import { Skeleton, EmptyState, PageLoader, CardLoader, CardTextLoader } from "@/ui/Feedback";
 
 function WorkersDirectoryContent() {
   const router = useRouter();
@@ -104,8 +104,12 @@ function WorkersDirectoryContent() {
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-navy-900 tracking-tight">
                   Explore Workers
                 </h1>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700">
-                  {workers.length} {workers.length === 1 ? "pro" : "pros"}
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 min-w-[50px] inline-flex items-center justify-center">
+                  {loading ? (
+                    <CardTextLoader size="xs" />
+                  ) : (
+                    `${workers.length} ${workers.length === 1 ? "pro" : "pros"}`
+                  )}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
@@ -263,23 +267,8 @@ function WorkersDirectoryContent() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="w-12 h-12 rounded-2xl" />
-                      <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                  </div>
-                ))}
+              <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+                <CardLoader size="lg" text="Finding vetted specialists..." />
               </div>
             ) : workers.length === 0 ? (
               <EmptyState
@@ -425,7 +414,7 @@ function WorkersDirectoryContent() {
 
 export default function WorkersDirectoryPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading directory...</div>}>
+    <Suspense fallback={<PageLoader text="Loading directory..." subtext="Connecting to vetted professionals..." />}>
       <WorkersDirectoryContent />
     </Suspense>
   );

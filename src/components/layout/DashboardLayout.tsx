@@ -27,7 +27,7 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from "lucide-react";
-import { Avatar } from "@/ui/Feedback";
+import { Avatar, CardTextLoader } from "@/ui/Feedback";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
 import { AppLogo } from "@/ui/AppLogo";
@@ -229,7 +229,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
           <div className="flex items-center gap-2.5 min-w-0">
             <Avatar name={user?.name || "User"} src={user?.avatarUrl} size="sm" />
             <div className="min-w-0">
-              <p className="text-xs font-bold text-navy-900 truncate">{user?.name || "Loading..."}</p>
+              <p className="text-xs font-bold text-navy-900 truncate">
+                {user?.name || <CardTextLoader size="xs" text="Loading..." />}
+              </p>
               <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
             </div>
           </div>
@@ -296,7 +298,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Avatar name={user?.name || "User"} src={user?.avatarUrl} size="sm" />
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-navy-900 truncate">{user?.name}</p>
+                      <p className="text-xs font-bold text-navy-900 truncate">
+                        {user?.name || <CardTextLoader size="xs" text="Loading..." />}
+                      </p>
                       <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
 import { Modal } from "@/ui/Modal";
-import { Skeleton, EmptyState } from "@/ui/Feedback";
+import { Skeleton, EmptyState, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { PaymentModal } from "@/components/dashboard/PaymentModal";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ export default function ClientPaymentsPage() {
               Total Paid to Date
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(totalPaid)}
+              {loading ? <CardTextLoader size="xs" /> : formatCurrency(totalPaid)}
             </p>
             <span className="text-[11px] text-emerald-600 mt-1 block">
               {payments.length} successful transactions
@@ -88,7 +88,7 @@ export default function ClientPaymentsPage() {
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
               {loading ? (
-                <Skeleton className="h-8 w-12" />
+                <CardTextLoader size="xs" />
               ) : (
                 unpaidBookings.length
               )}
@@ -153,9 +153,8 @@ export default function ClientPaymentsPage() {
           <h3 className="text-sm font-bold text-navy-900">Payment History</h3>
 
           {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 w-full rounded-2xl" />
-              <Skeleton className="h-16 w-full rounded-2xl" />
+            <div className="py-16 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+              <CardLoader size="lg" text="Loading payment records..." />
             </div>
           ) : payments.length === 0 ? (
             <Card className="p-8 text-center">

@@ -20,7 +20,7 @@ import Pusher from "pusher-js";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/ui/Card";
 import { Button } from "@/ui/Button";
-import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
+import { Avatar, Skeleton, EmptyState, CardLoader } from "@/ui/Feedback";
 import { formatDateTime, formatDate, formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
@@ -279,10 +279,8 @@ export default function ClientMessagesPage() {
             {/* Conversation Items */}
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
               {loadingConv ? (
-                <div className="p-4 space-y-3">
-                  <Skeleton className="h-16 w-full rounded-2xl" />
-                  <Skeleton className="h-16 w-full rounded-2xl" />
-                  <Skeleton className="h-16 w-full rounded-2xl" />
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <CardLoader size="md" text="Loading chats..." />
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="p-8 text-center">
@@ -413,10 +411,8 @@ export default function ClientMessagesPage() {
                 {/* Messages stream */}
                 <div className="flex-1 p-3.5 sm:p-6 overflow-y-auto space-y-3.5">
                   {loadingMessages ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-12 w-48 rounded-2xl" />
-                      <Skeleton className="h-12 w-64 rounded-2xl ml-auto" />
-                      <Skeleton className="h-12 w-52 rounded-2xl" />
+                    <div className="py-16 flex flex-col items-center justify-center">
+                      <CardLoader size="md" text="Loading message history..." />
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="text-center py-12 space-y-2">

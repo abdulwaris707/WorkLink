@@ -23,7 +23,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
-import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
+import { Avatar, Skeleton, EmptyState, DotLoader, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 import { UpcomingAppointmentCard } from "@/components/dashboard/UpcomingAppointmentCard";
 
@@ -101,7 +101,10 @@ export default function ClientOverviewPage() {
             </span>
             <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
               {loading ? (
-                <span className="inline-block w-44 h-8 bg-white/20 animate-pulse rounded-lg align-middle" />
+                <span className="inline-flex items-center gap-2">
+                  <DotLoader size="sm" inline color="text-primary-300" />
+                  <span className="text-sm font-medium text-white/80">Loading profile...</span>
+                </span>
               ) : data.user?.name ? (
                 `Hello, ${data.user.name}`
               ) : (
@@ -176,7 +179,7 @@ export default function ClientOverviewPage() {
               Active Bookings
             </span>
             <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
-              {loading ? <Skeleton className="h-7 w-12" /> : upcomingBookings.length}
+              {loading ? <CardTextLoader size="xs" /> : upcomingBookings.length}
             </p>
             <span className="text-[10px] sm:text-[11px] text-primary-600 mt-0.5 block truncate">Scheduled jobs</span>
           </Card>
@@ -186,7 +189,7 @@ export default function ClientOverviewPage() {
               Completed Jobs
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-12" /> : completedBookings.length}
+              {loading ? <CardTextLoader size="xs" /> : completedBookings.length}
             </p>
             <span className="text-[11px] text-emerald-600 mt-1 block">Successfully closed</span>
           </Card>
@@ -197,7 +200,7 @@ export default function ClientOverviewPage() {
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
               {loading ? (
-                <Skeleton className="h-8 w-12" />
+                <CardTextLoader size="xs" />
               ) : (
                 data.conversations.reduce((sum, c) => sum + (c._count?.messages || 0), 0)
               )}
@@ -210,7 +213,7 @@ export default function ClientOverviewPage() {
               Total Spent
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-20" /> : formatCurrency(totalSpent)}
+              {loading ? <CardTextLoader size="xs" /> : formatCurrency(totalSpent)}
             </p>
             <span className="text-[11px] text-slate-400 mt-1 block">Paid to pros</span>
           </Card>
@@ -231,10 +234,9 @@ export default function ClientOverviewPage() {
             </div>
 
             {loading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-24 w-full rounded-2xl" />
-                <Skeleton className="h-24 w-full rounded-2xl" />
-              </div>
+              <Card className="p-8">
+                <CardLoader text="Loading upcoming appointments..." size="md" />
+              </Card>
             ) : upcomingBookings.length === 0 ? (
               <Card className="p-8 text-center">
                 <EmptyState
@@ -278,10 +280,7 @@ export default function ClientOverviewPage() {
               </div>
 
               {loading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full rounded-xl" />
-                  <Skeleton className="h-12 w-full rounded-xl" />
-                </div>
+                <CardLoader size="sm" text="Loading messages..." />
               ) : data.conversations.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-6">
                   No active conversations yet
@@ -325,7 +324,7 @@ export default function ClientOverviewPage() {
               </div>
 
               {loading ? (
-                <Skeleton className="h-16 w-full rounded-xl" />
+                <CardLoader size="sm" text="Loading alerts..." />
               ) : data.notifications.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-4">No recent alerts</p>
               ) : (

@@ -22,7 +22,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
-import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
+import { Avatar, Skeleton, EmptyState, CardLoader, CardTextLoader } from "@/ui/Feedback";
 import { Modal } from "@/ui/Modal";
 import { PaymentModal } from "@/components/dashboard/PaymentModal";
 import { ReviewModal } from "@/components/dashboard/ReviewModal";
@@ -127,9 +127,8 @@ export default function ClientBookingsPage() {
 
         {/* Bookings List */}
         {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full rounded-2xl" />
-            <Skeleton className="h-32 w-full rounded-2xl" />
+          <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+            <CardLoader size="lg" text="Loading your bookings..." />
           </div>
         ) : filteredBookings.length === 0 ? (
           <Card className="p-8 text-center">

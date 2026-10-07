@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { DotLoader } from "@/ui/Feedback";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "destructive" | "ghost" | "link";
@@ -57,7 +57,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin text-current" />
+            <DotLoader size="xs" color="text-current" inline />
             <span>{children}</span>
           </>
         ) : (
