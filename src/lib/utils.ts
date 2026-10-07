@@ -35,6 +35,21 @@ export function formatDateTime(date: string | Date | null | undefined): string {
   }).format(d);
 }
 
+export function parseDateParts(date: string | Date | null | undefined): {
+  month: string;
+  day: string;
+  weekday: string;
+} {
+  if (!date) return { month: "DATE", day: "--", weekday: "---" };
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return { month: "DATE", day: "--", weekday: "---" };
+  return {
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
+    weekday: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
+  };
+}
+
 export function getStatusColor(status: string): { bg: string; text: string; border: string } {
   switch (status.toUpperCase()) {
     case "ACCEPTED":

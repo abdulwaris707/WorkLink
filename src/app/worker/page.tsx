@@ -26,6 +26,7 @@ import { Card } from "@/ui/Card";
 import { Badge } from "@/ui/Badge";
 import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
+import { UpcomingAppointmentCard } from "@/components/dashboard/UpcomingAppointmentCard";
 
 export default function WorkerOverviewPage() {
   const [data, setData] = useState<{
@@ -361,45 +362,14 @@ export default function WorkerOverviewPage() {
                 />
               </Card>
             ) : (
-              <div className="space-y-3">
-                {upcomingJobs.slice(0, 4).map((job) => {
-                  const statusColors = getStatusColor(job.status);
-                  return (
-                    <Card key={job.id} hoverEffect className="p-4 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <Avatar name={job.client.name} src={job.client.avatarUrl} size="md" />
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-bold text-navy-900 truncate">
-                            {job.service.title}
-                          </h4>
-                          <p className="text-xs text-slate-500">
-                            Client: <span className="font-semibold text-navy-800">{job.client.name}</span>
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
-                            <span>{formatDate(job.bookingDate)}</span>
-                            <span>•</span>
-                            <span>{job.timeSlot}</span>
-                            <span>•</span>
-                            <span className="font-bold text-navy-900">{formatCurrency(job.quotedPrice)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
-                        >
-                          {job.status.replace("_", " ")}
-                        </span>
-                        <Link href="/worker/bookings">
-                          <Button size="sm" variant="outline" className="h-7 text-xs">
-                            Manage
-                          </Button>
-                        </Link>
-                      </div>
-                    </Card>
-                  );
-                })}
+              <div className="space-y-3.5">
+                {upcomingJobs.slice(0, 4).map((job) => (
+                  <UpcomingAppointmentCard
+                    key={job.id}
+                    booking={job}
+                    userRole="WORKER"
+                  />
+                ))}
               </div>
             )}
           </div>

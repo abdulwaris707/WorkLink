@@ -27,7 +27,7 @@ import { Modal } from "@/ui/Modal";
 import { PaymentModal } from "@/components/dashboard/PaymentModal";
 import { ReviewModal } from "@/components/dashboard/ReviewModal";
 import { BookingDetailModal } from "@/components/dashboard/BookingDetailModal";
-import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
+import { formatCurrency, formatDate, parseDateParts, getStatusColor } from "@/lib/utils";
 
 export default function ClientBookingsPage() {
   const router = useRouter();
@@ -154,37 +154,66 @@ export default function ClientBookingsPage() {
               const isPaid = b.paymentStatus === "PAID";
               const hasReview = Boolean(b.review);
 
+              const dateParts = parseDateParts(b.bookingDate);
+
               return (
-                <Card key={b.id} className="p-5 sm:p-6 space-y-4 border-slate-200/90">
+                <Card key={b.id} className="p-5 sm:p-6 space-y-4 border-slate-200/90 shadow-card hover:shadow-elevated transition-all">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-100">
-                    <div className="flex items-start gap-4">
-                      <Avatar
-                        name={b.worker.name}
-                        src={b.worker.avatarUrl}
-                        size="lg"
-                        className="rounded-2xl"
-                      />
-                      <div>
+                    <div className="flex items-start gap-3.5">
+                      {/* Calendar Ticket Badge */}
+                      <div className="w-13 sm:w-14 shrink-0 rounded-xl border border-slate-200/90 overflow-hidden text-center bg-white shadow-xs">
+                        <div className="bg-primary-600 text-white text-[10px] font-extrabold uppercase py-0.5 tracking-wider">
+                          {dateParts.month}
+                        </div>
+                        <div className="py-1 px-1 bg-white">
+                          <span className="text-base sm:text-lg font-black text-navy-900 leading-none block">
+                            {dateParts.day}
+                          </span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-tight mt-0.5">
+                            {dateParts.weekday}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-base font-bold text-navy-900">
                             {b.service.title}
                           </h3>
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
                           >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                b.status === "ACCEPTED" || b.status === "IN_PROGRESS"
+                                  ? "bg-emerald-600 animate-pulse"
+                                  : b.status === "PENDING"
+                                  ? "bg-amber-500"
+                                  : "bg-slate-400"
+                              }`}
+                            />
                             {b.status.replace("_", " ")}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Worker: <span className="font-semibold text-navy-800">{b.worker.name}</span>
-                          {b.worker.phone && (
-                            <span className="text-slate-400"> • {b.worker.phone}</span>
-                          )}
-                        </p>
+
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <Avatar
+                            name={b.worker.name}
+                            src={b.worker.avatarUrl}
+                            size="sm"
+                            className="w-5 h-5 rounded-md text-[10px]"
+                          />
+                          <p className="text-xs text-slate-600">
+                            Pro: <span className="font-semibold text-navy-800">{b.worker.name}</span>
+                            {b.worker.phone && (
+                              <span className="text-slate-400"> • {b.worker.phone}</span>
+                            )}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="sm:text-right shrink-0">
+                    <div className="sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex sm:flex-col items-center sm:items-end justify-between">
                       <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">
                         Quoted Price
                       </span>
@@ -201,29 +230,38 @@ export default function ClientBookingsPage() {
                     </div>
                   </div>
 
-                  {/* Booking details middle row */}
+                  {/* Booking details middle row with icons */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-                    <div>
-                      <span className="text-[11px] text-slate-400 block font-semibold">
-                        Appointment Date
-                      </span>
-                      <p className="font-semibold text-navy-900 mt-0.5">
-                        {formatDate(b.bookingDate)}
-                      </p>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] text-slate-400 block font-semibold">
+                          Appointment Date
+                        </span>
+                        <p className="font-semibold text-navy-900 mt-0.5">
+                          {formatDate(b.bookingDate)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[11px] text-slate-400 block font-semibold">
-                        Scheduled Time Window
-                      </span>
-                      <p className="font-semibold text-navy-900 mt-0.5">{b.timeSlot}</p>
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] text-slate-400 block font-semibold">
+                          Time Window
+                        </span>
+                        <p className="font-semibold text-navy-900 mt-0.5">{b.timeSlot}</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[11px] text-slate-400 block font-semibold">
-                        Special Instructions
-                      </span>
-                      <p className="text-slate-600 mt-0.5 line-clamp-1 truncate">
-                        {b.requestDetails}
-                      </p>
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[11px] text-slate-400 block font-semibold">
+                          Special Instructions
+                        </span>
+                        <p className="text-slate-600 mt-0.5 line-clamp-1 truncate">
+                          {b.requestDetails || "None provided"}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
