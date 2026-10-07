@@ -1,0 +1,299 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  FileText,
+  DollarSign,
+  Download,
+  ShieldCheck,
+} from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Button } from "@/ui/Button";
+import { Card } from "@/ui/Card";
+import { Badge } from "@/ui/Badge";
+import { Modal } from "@/ui/Modal";
+import { Skeleton, EmptyState } from "@/ui/Feedback";
+import { PaymentModal } from "@/components/dashboard/PaymentModal";
+import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
+
+export default function ClientPaymentsPage() {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [unpaidBookings, setUnpaidBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [paymentModalBooking, setPaymentModalBooking] = useState<any | null>(null);
+  const [receiptPayment, setReceiptPayment] = useState<any | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [paymentsRes, bookingsRes] = await Promise.all([
+        fetch("/api/payments"),
+        fetch("/api/bookings"),
+      ]);
+
+      const [pData, bData] = await Promise.all([paymentsRes.json(), bookingsRes.json()]);
+
+      setPayments(pData.payments || []);
+      const unpaid = (bData.bookings || []).filter(
+        (b: any) =>
+          b.paymentStatus === "PENDING" &&
+          (b.status === "ACCEPTED" || b.status === "IN_PROGRESS" || b.status === "COMPLETED")
+      );
+      setUnpaidBookings(unpaid);
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const totalPaid = payments
+    .filter((p) => p.status === "PAID")
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  return (
+    <DashboardLayout role="CLIENT">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-extrabold text-navy-900">Payments & Receipts</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Review your past invoices, verify payment IDs, and complete open balances.
+          </p>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="p-5">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Total Paid to Date
+            </span>
+            <p className="text-2xl font-bold text-navy-900 mt-2">
+              {loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(totalPaid)}
+            </p>
+            <span className="text-[11px] text-emerald-600 mt-1 block">
+              {payments.length} successful transactions
+            </span>
+          </Card>
+
+          <Card className="p-5">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Pending Balances
+            </span>
+            <p className="text-2xl font-bold text-navy-900 mt-2">
+              {loading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                unpaidBookings.length
+              )}
+            </p>
+            <span className="text-[11px] text-amber-600 mt-1 block">
+              {unpaidBookings.length > 0 ? "Awaiting client checkout" : "All payments current"}
+            </span>
+          </Card>
+
+          <Card className="p-5">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Protection Guarantee
+            </span>
+            <p className="text-sm font-bold text-navy-900 mt-2 flex items-center gap-1.5 text-emerald-700">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" /> 100% Secure Processing
+            </p>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              Payments held until work confirmation
+            </span>
+          </Card>
+        </div>
+
+        {/* Unpaid Bookings Action Notice */}
+        {unpaidBookings.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-500" /> Pending Payments
+            </h3>
+            <div className="space-y-3">
+              {unpaidBookings.map((b) => (
+                <Card
+                  key={b.id}
+                  className="p-4 border-amber-200/80 bg-amber-50/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div>
+                    <h4 className="text-sm font-bold text-navy-900">{b.service.title}</h4>
+                    <p className="text-xs text-slate-500">
+                      Pro: {b.worker.name} • Scheduled: {formatDate(b.bookingDate)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-base font-bold text-navy-900">
+                      {formatCurrency(b.quotedPrice)}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setPaymentModalBooking(b)}
+                    >
+                      Pay Now
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past Transactions Table */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-navy-900">Payment History</h3>
+
+          {loading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+            </div>
+          ) : payments.length === 0 ? (
+            <Card className="p-8 text-center">
+              <EmptyState
+                icon={<CreditCard className="w-6 h-6 text-slate-300" />}
+                title="No Invoices Yet"
+                description="When you book and pay for services, your itemized receipts will show here."
+              />
+            </Card>
+          ) : (
+            <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200/90 shadow-card">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
+                    <th className="p-4">Transaction / Service</th>
+                    <th className="p-4">Worker</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {payments.map((p) => {
+                    const statusColors = getStatusColor(p.status);
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4 font-semibold text-navy-900">
+                          {p.booking?.service?.title || "WorkLink Booking"}
+                          <span className="block text-[10px] text-slate-400 font-normal">
+                            Ref: {p.providerPaymentId || p.id.substring(0, 8)}
+                          </span>
+                        </td>
+                        <td className="p-4">{p.worker?.name || "Professional"}</td>
+                        <td className="p-4 text-slate-500">{formatDate(p.createdAt)}</td>
+                        <td className="p-4 font-bold text-navy-900">
+                          {formatCurrency(p.amount, p.currency)}
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
+                          >
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => setReceiptPayment(p)}
+                            leftIcon={<FileText className="w-3.5 h-3.5" />}
+                          >
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Payment Processing Modal */}
+      {paymentModalBooking && (
+        <PaymentModal
+          isOpen={Boolean(paymentModalBooking)}
+          onClose={() => setPaymentModalBooking(null)}
+          booking={paymentModalBooking}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {/* Receipt Preview Dialog */}
+      {receiptPayment && (
+        <Modal
+          isOpen={Boolean(receiptPayment)}
+          onClose={() => setReceiptPayment(null)}
+          title="Payment Receipt"
+          maxWidth="sm"
+        >
+          <div className="space-y-4 pt-1 text-xs text-slate-600">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div className="flex justify-between">
+                <span>Receipt Number:</span>
+                <span className="font-mono text-navy-900 font-semibold">
+                  {receiptPayment.id.substring(0, 12).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Payment Reference:</span>
+                <span className="font-mono text-navy-900 font-semibold">
+                  {receiptPayment.providerPaymentId || "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Date & Time:</span>
+                <span className="text-navy-900">{formatDate(receiptPayment.createdAt)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Paid To:</span>
+                <span className="text-navy-900 font-semibold">{receiptPayment.worker?.name}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-b border-slate-100 py-3 space-y-1.5">
+              <div className="flex justify-between">
+                <span>{receiptPayment.booking?.service?.title || "Service Delivered"}</span>
+                <span className="font-bold text-navy-900">
+                  {formatCurrency(receiptPayment.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Payment Method:</span>
+                <span>Encrypted Card (Stripe Test)</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between text-sm font-bold text-navy-900">
+              <span>Total Paid</span>
+              <span className="text-emerald-600">{formatCurrency(receiptPayment.amount)}</span>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-center"
+                onClick={() => setReceiptPayment(null)}
+              >
+                Close Receipt
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </DashboardLayout>
+  );
+}
