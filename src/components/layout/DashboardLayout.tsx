@@ -45,6 +45,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
+  const isHomeScreen = pathname === "/client" || pathname === "/worker";
+  const isChat = pathname?.includes("/messages");
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
@@ -240,31 +243,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
         </div>
       </aside>
 
-      {/* Mobile Top App Header */}
-      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2 flex items-center justify-between shadow-subtle">
-        <Link href="/" className="flex items-center">
-          <AppLogo size="sm" />
-        </Link>
-        <div className="flex items-center gap-1.5">
-          <Link
-            href={role === "WORKER" ? "/worker/notifications" : "/client/notifications"}
-            className="p-2 text-slate-500 hover:text-navy-900 relative rounded-lg"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            {unreadNotifications > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            )}
+      {/* Mobile Top App Header (Only visible on Home Screen of Client and Worker) */}
+      {isHomeScreen && (
+        <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2 flex items-center justify-between shadow-subtle">
+          <Link href="/" className="flex items-center">
+            <AppLogo size="sm" />
           </Link>
-          <button
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="p-2 text-navy-900 rounded-lg hover:bg-slate-100 transition-colors"
-            aria-label="Open menu"
-          >
-            {mobileNavOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </header>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={role === "WORKER" ? "/worker/notifications" : "/client/notifications"}
+              className="p-2 text-slate-500 hover:text-navy-900 relative rounded-lg"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifications > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              )}
+            </Link>
+            <button
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              className="p-2 text-navy-900 rounded-lg hover:bg-slate-100 transition-colors"
+              aria-label="Open menu"
+            >
+              {mobileNavOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Mobile Drawer (Native Bottom/Side Sheet) */}
       <AnimatePresence>
@@ -353,7 +358,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       </AnimatePresence>
 
       {/* Main Content Area (Protected bottom padding prevents native mobile bottom nav overlap) */}
-      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto overflow-x-hidden pb-28 md:pb-8">
+      <main
+        className={`flex-1 w-full overflow-x-hidden ${
+          isChat
+            ? "p-0 max-w-full pb-[76px] md:pb-0 h-[calc(100dvh-76px)] md:h-screen flex flex-col"
+            : "p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-28 md:pb-8"
+        }`}
+      >
         {children}
       </main>
 

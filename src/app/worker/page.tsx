@@ -149,7 +149,9 @@ export default function WorkerOverviewPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">Worker Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">
+                {data.user?.name ? `Hello, ${data.user.name}` : "Worker Dashboard"}
+              </h1>
               {verificationStatus === "approved" && (
                 <Badge variant="success" size="sm">
                   <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Verified Pro

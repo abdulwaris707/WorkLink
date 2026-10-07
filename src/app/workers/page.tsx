@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WorkerCard } from "@/components/workers/WorkerCard";
 import { Button } from "@/ui/Button";
 import { Input } from "@/ui/Input";
@@ -92,10 +93,8 @@ function WorkersDirectoryContent() {
     setSort("recommended");
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <Navbar currentUser={currentUser} />
-
+  const directoryBody = (
+    <div className="flex-1 w-full">
       {/* Header Banner */}
       <div className="bg-white border-b border-slate-200/80 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -394,7 +393,21 @@ function WorkersDirectoryContent() {
           </div>
         </div>
       )}
+    </div>
+  );
 
+  if (currentUser?.role === "CLIENT") {
+    return <DashboardLayout role="CLIENT">{directoryBody}</DashboardLayout>;
+  }
+
+  if (currentUser?.role === "WORKER") {
+    return <DashboardLayout role="WORKER">{directoryBody}</DashboardLayout>;
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <Navbar currentUser={currentUser} />
+      {directoryBody}
       <Footer />
     </div>
   );

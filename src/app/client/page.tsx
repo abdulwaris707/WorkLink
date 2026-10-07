@@ -99,10 +99,16 @@ export default function ClientOverviewPage() {
             <span className="text-[11px] font-bold uppercase tracking-wider text-primary-400">
               Welcome back
             </span>
-            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
-              {data.user?.name ? `Hello, ${data.user.name}` : "Client Dashboard"}
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {loading ? (
+                <span className="inline-block w-44 h-8 bg-white/20 animate-pulse rounded-lg align-middle" />
+              ) : data.user?.name ? (
+                `Hello, ${data.user.name}`
+              ) : (
+                "Welcome to WorkLink"
+              )}
             </h1>
-            <p className="text-xs text-slate-300 max-w-xl">
+            <p className="text-xs text-slate-200 max-w-xl">
               Find verified tradespeople, track live appointment timelines, and securely chat with your service providers.
             </p>
           </div>

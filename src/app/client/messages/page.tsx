@@ -247,23 +247,13 @@ export default function ClientMessagesPage() {
 
   return (
     <DashboardLayout role="CLIENT">
-      <div className="space-y-4">
-        {/* Header (Desktop only or when on conversation list) */}
-        <div className={showMobileChat ? "hidden sm:block" : "block"}>
-          <h1 className="text-2xl font-extrabold text-navy-900 tracking-tight">Messages & Coordination</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time direct messaging with verified service professionals.
-          </p>
-        </div>
-
-        {/* Messaging Box Container */}
-        <Card className="h-[calc(100vh-210px)] min-h-[580px] max-h-[820px] flex overflow-hidden border-slate-200/90 shadow-card bg-white">
-          {/* Left: Conversations list (Visible on desktop OR on mobile when no chat is open) */}
-          <div
-            className={`w-full sm:w-80 md:w-96 border-r border-slate-200/80 flex flex-col bg-white shrink-0 ${
-              showMobileChat ? "hidden sm:flex" : "flex"
-            }`}
-          >
+      <div className="flex-1 flex w-full h-full min-h-0 bg-white overflow-hidden">
+        {/* Left: Conversations list (Visible on desktop OR on mobile when no chat is open) */}
+        <div
+          className={`w-full sm:w-80 md:w-96 border-r border-slate-200/80 flex flex-col bg-white shrink-0 h-full ${
+            showMobileChat ? "hidden sm:flex" : "flex"
+          }`}
+        >
             {/* Inbox Search & Title */}
             <div className="p-3.5 border-b border-slate-100 space-y-2">
               <div className="flex items-center justify-between">
@@ -513,8 +503,7 @@ export default function ClientMessagesPage() {
               </div>
             )}
           </div>
-        </Card>
-      </div>
-    </DashboardLayout>
-  );
+        </div>
+      </DashboardLayout>
+    );
 }
