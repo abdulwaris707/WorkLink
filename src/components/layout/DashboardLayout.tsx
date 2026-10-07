@@ -30,6 +30,7 @@ import {
 import { Avatar } from "@/ui/Feedback";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
+import { AppLogo } from "@/ui/AppLogo";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -155,13 +156,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-200/80 bg-white min-h-screen shrink-0 sticky top-0 h-screen z-20 shadow-subtle">
         {/* Brand */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <Briefcase className="w-4 h-4" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-navy-900">
-              Work<span className="text-primary-600">Link</span>
-            </span>
+          <Link href="/" className="flex items-center group">
+            <AppLogo size="sm" />
           </Link>
           <Badge variant={role === "WORKER" ? "info" : "success"} size="sm">
             {role === "WORKER" ? "Worker" : "Client"}
@@ -245,12 +241,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       </aside>
 
       {/* Mobile Top App Header */}
-      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between shadow-subtle">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white shadow-sm">
-            <Briefcase className="w-3.5 h-3.5" />
-          </div>
-          <span className="font-bold text-navy-900 text-sm tracking-tight">WorkLink</span>
+      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2 flex items-center justify-between shadow-subtle">
+        <Link href="/" className="flex items-center">
+          <AppLogo size="sm" />
         </Link>
         <div className="flex items-center gap-1.5">
           <Link

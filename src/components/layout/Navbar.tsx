@@ -20,6 +20,7 @@ import {
 import { Button } from "@/ui/Button";
 import { Avatar } from "@/ui/Feedback";
 import { Badge } from "@/ui/Badge";
+import { AppLogo } from "@/ui/AppLogo";
 
 interface NavbarProps {
   currentUser?: {
@@ -97,13 +98,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentUser: initialUser }) => {
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
-        <NextLink href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-sm group-hover:bg-primary-700 transition-colors">
-            <Briefcase className="w-5 h-5" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-navy-900">
-            Work<span className="text-primary-600">Link</span>
-          </span>
+        <NextLink href="/" className="flex items-center group">
+          <AppLogo size="md" />
         </NextLink>
 
         {/* Desktop Navigation Links */}

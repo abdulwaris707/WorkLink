@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Briefcase, ShieldCheck, Star, Users, Heart } from "lucide-react";
+import { ShieldCheck, Star, Users, Heart } from "lucide-react";
+import { AppLogo } from "@/ui/AppLogo";
 
 export const Footer: React.FC = () => {
   return (
@@ -9,13 +10,8 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand info */}
           <div className="space-y-4 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-primary-600 flex items-center justify-center text-white">
-                <Briefcase className="w-4 h-4" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-navy-900">
-                Work<span className="text-primary-600">Link</span>
-              </span>
+            <Link href="/" className="inline-flex items-center">
+              <AppLogo size="md" />
             </Link>
             <p className="text-sm text-slate-500 leading-relaxed">
               The trusted marketplace connecting vetted, skilled trade & digital service

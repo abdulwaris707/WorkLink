@@ -8,6 +8,7 @@ import { Button } from "@/ui/Button";
 import { Input } from "@/ui/Input";
 import { Card } from "@/ui/Card";
 import { Skeleton } from "@/ui/Feedback";
+import { AppLogo } from "@/ui/AppLogo";
 
 function LoginForm() {
   const router = useRouter();
@@ -132,13 +133,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
-        <Link href="/" className="inline-flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-sm">
-            <Briefcase className="w-5 h-5" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-navy-900">
-            Work<span className="text-primary-600">Link</span>
-          </span>
+        <Link href="/" className="inline-flex items-center">
+          <AppLogo size="lg" />
         </Link>
         <h2 className="text-xl sm:text-2xl font-bold text-navy-900 pt-2">
           Sign in to your account
