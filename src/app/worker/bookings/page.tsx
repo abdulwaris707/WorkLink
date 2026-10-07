@@ -239,30 +239,33 @@ export default function WorkerBookingsPage() {
                   )}
 
                   {/* Actions Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <Button
                         size="sm"
                         variant="secondary"
+                        className="flex-1 sm:flex-none justify-center"
                         leftIcon={<FileText className="w-3.5 h-3.5" />}
                         onClick={() => setSelectedBooking(b)}
                       >
-                        Timeline & Details
+                        Details
                       </Button>
 
-                      <Link href="/worker/messages">
+                      <Link href={`/worker/messages?recipientId=${b.clientId}`} className="flex-1 sm:flex-none">
                         <Button
                           size="sm"
                           variant="outline"
+                          className="w-full justify-center"
                           leftIcon={<MessageSquare className="w-3.5 h-3.5" />}
                         >
-                          Message Client
+                          Message
                         </Button>
                       </Link>
 
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="flex-1 sm:flex-none justify-center text-xs"
                         onClick={() => {
                           setNotesBooking(b);
                           setNotesText(b.notes || "");

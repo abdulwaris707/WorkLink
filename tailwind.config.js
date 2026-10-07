@@ -8,40 +8,59 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Primary brand green (main CTA, active states, confirmations)
         primary: {
-          50: "#EEF2FF",
-          100: "#E0E7FF",
-          200: "#C7D2FE",
-          300: "#A5B4FC",
-          400: "#818CF8",
-          500: "#6366F1", // Indigo / Blue trust accent
-          600: "#4F46E5",
-          700: "#4338CA",
-          800: "#3730A3",
-          900: "#312E81",
-          950: "#1E1B4B",
+          50: "#EAF8EF",  // Soft green surface
+          100: "#D3F1DF",
+          200: "#A7E3BF",
+          300: "#7BD59F",
+          400: "#4FC780",
+          500: "#1FA75B", // Action green
+          600: "#168A4A", // Primary green / CTA
+          700: "#12703C",
+          800: "#0E572E",
+          900: "#0A3D20",
+          950: "#052412",
         },
+        // Refined Navy palette
         navy: {
-          900: "#0F172A", // Deep navy for headers & primary text
-          800: "#1E293B",
-          700: "#334155",
-          600: "#475569",
+          950: "#071629", // Deep navy
+          900: "#0B1F3A", // Primary navy
+          800: "#122033", // Main text
+          700: "#1E2E44",
+          600: "#33455E",
+          500: "#475B77",
+          400: "#64748B", // Muted text
+        },
+        // Supporting Blue
+        brandBlue: {
+          50: "#EAF2FF",  // Soft blue surface
+          500: "#2563EB", // Supporting blue
+          600: "#1D4ED8",
+        },
+        // Action & Soft surfaces
+        surface: {
+          bg: "#F8FAFC",
+          card: "#FFFFFF",
+          green: "#EAF8EF",
+          blue: "#EAF2FF",
         },
         accent: {
-          50: "#ECFDF5",
-          100: "#D1FAE5",
-          500: "#10B981", // Emerald/Teal for availability, success, positive status
-          600: "#059669",
-          700: "#047857",
+          50: "#EAF8EF",
+          100: "#D3F1DF",
+          500: "#1FA75B",
+          600: "#168A4A",
+          700: "#12703C",
         },
       },
       borderRadius: {
-        card: "14px",
+        card: "16px",
       },
       boxShadow: {
-        subtle: "0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05)",
-        card: "0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03)",
-        elevated: "0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.04)",
+        subtle: "0 1px 2px 0 rgba(11, 31, 58, 0.04)",
+        card: "0 2px 4px -1px rgba(11, 31, 58, 0.04), 0 4px 6px -2px rgba(11, 31, 58, 0.02)",
+        elevated: "0 10px 25px -5px rgba(11, 31, 58, 0.08), 0 8px 10px -6px rgba(11, 31, 58, 0.04)",
+        modal: "0 20px 25px -5px rgba(7, 22, 41, 0.15), 0 8px 10px -6px rgba(7, 22, 41, 0.1)",
       },
     },
   },

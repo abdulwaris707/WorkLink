@@ -24,6 +24,7 @@ import { Input } from "@/ui/Input";
 import { useToast } from "@/ui/Toast";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 import Link from "next/link";
+import { ReportModal } from "./ReportModal";
 
 interface BookingDetailModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export function BookingDetailModal({
   const [booking, setBooking] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Reschedule state
   const [isRescheduling, setIsRescheduling] = useState(false);
@@ -400,56 +402,81 @@ export function BookingDetailModal({
             </div>
           )}
 
-          {/* Worker Action Buttons for Status Transition */}
-          {role === "WORKER" && (
-            <div className="pt-2 flex flex-wrap items-center justify-end gap-2 border-t border-slate-200">
-              {booking.status === "PENDING" && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleStatusChange("DECLINED")}
-                    isLoading={actionLoading}
-                  >
-                    Decline Request
-                  </Button>
+          {/* Bottom Actions Row */}
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReport(true)}
+              className="text-slate-600 hover:text-rose-600 hover:border-rose-200 text-xs"
+              leftIcon={<AlertCircle className="w-3.5 h-3.5" />}
+            >
+              Report an Issue
+            </Button>
+
+            {/* Worker Action Buttons for Status Transition */}
+            {role === "WORKER" && (
+              <div className="flex flex-wrap items-center gap-2">
+                {booking.status === "PENDING" && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleStatusChange("DECLINED")}
+                      isLoading={actionLoading}
+                    >
+                      Decline Request
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => handleStatusChange("ACCEPTED")}
+                      isLoading={actionLoading}
+                    >
+                      Accept Booking
+                    </Button>
+                  </>
+                )}
+
+                {booking.status === "ACCEPTED" && (
                   <Button
                     size="sm"
                     variant="primary"
-                    onClick={() => handleStatusChange("ACCEPTED")}
+                    leftIcon={<PlayCircle className="w-3.5 h-3.5" />}
+                    onClick={() => handleStatusChange("IN_PROGRESS")}
                     isLoading={actionLoading}
                   >
-                    Accept Booking
+                    Mark Work in Progress
                   </Button>
-                </>
-              )}
+                )}
 
-              {booking.status === "ACCEPTED" && (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  leftIcon={<PlayCircle className="w-3.5 h-3.5" />}
-                  onClick={() => handleStatusChange("IN_PROGRESS")}
-                  isLoading={actionLoading}
-                >
-                  Mark Work in Progress
-                </Button>
-              )}
-
-              {booking.status === "IN_PROGRESS" && (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-                  onClick={() => handleStatusChange("COMPLETED")}
-                  isLoading={actionLoading}
-                >
-                  Mark Completed
-                </Button>
-              )}
-            </div>
-          )}
+                {booking.status === "IN_PROGRESS" && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                    onClick={() => handleStatusChange("COMPLETED")}
+                    isLoading={actionLoading}
+                  >
+                    Mark Completed
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Embedded Report an Issue Flow */}
+      {booking && (
+        <ReportModal
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
+          bookingId={booking.id}
+          reportedUserId={role === "CLIENT" ? booking.workerId : booking.clientId}
+          contextTitle={`${booking.service?.title || "Service"} (${booking.timeSlot})`}
+        />
       )}
     </Modal>
   );

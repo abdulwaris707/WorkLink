@@ -116,14 +116,14 @@ export default async function HomePage() {
             </div>
 
             {/* Direct CTAs */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-              <Link href="/workers">
-                <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-sm sm:max-w-none mx-auto">
+              <Link href="/workers" className="w-full sm:w-auto">
+                <Button variant="primary" size="lg" className="w-full sm:w-auto justify-center" rightIcon={<ArrowRight className="w-4 h-4" />}>
                   Find a Worker
                 </Button>
               </Link>
-              <Link href="/signup?role=worker">
-                <Button variant="outline" size="lg">
+              <Link href="/signup?role=worker" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto justify-center">
                   Join as a Worker
                 </Button>
               </Link>

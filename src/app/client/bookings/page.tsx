@@ -235,24 +235,26 @@ export default function ClientBookingsPage() {
                   )}
 
                   {/* Action buttons row */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <Button
                         size="sm"
                         variant="secondary"
+                        className="flex-1 sm:flex-none justify-center"
                         leftIcon={<FileText className="w-3.5 h-3.5" />}
                         onClick={() => setSelectedBooking(b)}
                       >
-                        Timeline & Details
+                        Details
                       </Button>
 
-                      <Link href={`/client/messages?recipientId=${b.workerId}`}>
+                      <Link href={`/client/messages?recipientId=${b.workerId}`} className="flex-1 sm:flex-none">
                         <Button
                           size="sm"
                           variant="outline"
+                          className="w-full justify-center"
                           leftIcon={<MessageSquare className="w-3.5 h-3.5" />}
                         >
-                          Message Pro
+                          Message
                         </Button>
                       </Link>
 
@@ -261,20 +263,21 @@ export default function ClientBookingsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-rose-600 hover:bg-rose-50"
+                          className="text-rose-600 hover:bg-rose-50 flex-1 sm:flex-none justify-center"
                           onClick={() => setCancelModalBooking(b)}
                         >
-                          Cancel Booking
+                          Cancel
                         </Button>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                       {/* Pay Button if not paid */}
                       {!isPaid && (b.status === "ACCEPTED" || b.status === "COMPLETED") && (
                         <Button
                           size="sm"
                           variant="primary"
+                          className="w-full sm:w-auto justify-center"
                           leftIcon={<CreditCard className="w-3.5 h-3.5" />}
                           onClick={() => setPaymentBooking(b)}
                         >

@@ -4,15 +4,23 @@
 
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-slate-50 text-navy-900 antialiased font-sans selection:bg-primary-100 selection:text-primary-900;
+    @apply bg-slate-50 text-navy-800 antialiased font-sans selection:bg-primary-100 selection:text-primary-900;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight text-navy-900;
+    @apply tracking-tight text-navy-900 font-bold;
   }
 }
 
@@ -30,8 +38,8 @@
 
 /* Clean restrained custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -45,4 +53,13 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Hide scrollbar for clean horizontal tab rails */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

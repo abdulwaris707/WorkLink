@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/navigation";
 import NextLink from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {

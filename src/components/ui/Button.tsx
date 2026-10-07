@@ -26,15 +26,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none";
+      "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none text-center whitespace-nowrap";
 
     const variantStyles = {
       primary:
         "bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-500 shadow-sm",
       secondary:
-        "bg-slate-100 text-navy-900 hover:bg-slate-200 active:bg-slate-300 focus-visible:ring-slate-400",
+        "bg-slate-100 text-navy-800 hover:bg-slate-200 active:bg-slate-300 focus-visible:ring-slate-400",
       outline:
-        "border border-slate-200 bg-white text-navy-800 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 focus-visible:ring-primary-400 shadow-subtle",
+        "border border-slate-200 bg-white text-navy-800 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 focus-visible:ring-primary-500 shadow-subtle",
       destructive:
         "bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 focus-visible:ring-rose-500 shadow-sm",
       ghost:
@@ -43,9 +43,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizeStyles = {
-      sm: "text-xs px-3 py-1.5 gap-1.5 h-8",
-      md: "text-sm px-4 py-2.5 gap-2 h-10",
-      lg: "text-base px-6 py-3.5 gap-2.5 h-12",
+      sm: "text-xs px-3 py-1.5 gap-1.5 min-h-[36px]",
+      md: "text-sm px-4 py-2.5 gap-2 min-h-[44px]",
+      lg: "text-base px-6 py-3.5 gap-2.5 min-h-[48px]",
     };
 
     return (

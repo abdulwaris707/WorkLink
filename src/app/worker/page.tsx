@@ -145,10 +145,10 @@ export default function WorkerOverviewPage() {
         )}
 
         {/* Top Header & Profile Progress */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-extrabold text-navy-900">Worker Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">Worker Dashboard</h1>
               {verificationStatus === "approved" && (
                 <Badge variant="success" size="sm">
                   <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Verified Pro
@@ -159,85 +159,85 @@ export default function WorkerOverviewPage() {
               Manage incoming requests, track real revenue, update weekly availability, and communicate with clients.
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {data.workerProfile?.slug && (
-              <Link href={`/workers/${data.workerProfile.slug}`} target="_blank">
-                <Button size="sm" variant="outline" rightIcon={<ExternalLink className="w-3.5 h-3.5" />}>
-                  View Live Profile
+              <Link href={`/workers/${data.workerProfile.slug}`} target="_blank" className="flex-1 sm:flex-none">
+                <Button size="sm" variant="outline" className="w-full justify-center" rightIcon={<ExternalLink className="w-3.5 h-3.5" />}>
+                  Live Profile
                 </Button>
               </Link>
             )}
-            <Link href="/worker/services">
-              <Button size="sm" variant="primary" leftIcon={<Layers className="w-4 h-4" />}>
-                Manage Services
+            <Link href="/worker/services" className="flex-1 sm:flex-none">
+              <Button size="sm" variant="primary" className="w-full justify-center" leftIcon={<Layers className="w-4 h-4" />}>
+                Services
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Quick Action Navigation Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           <Link href="/worker/services" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <Layers className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">Add / Edit Services</span>
-              <span className="text-[10px] text-slate-400">Manage service menu</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">Add / Edit Services</span>
+              <span className="text-[10px] text-slate-400 truncate block">Manage service menu</span>
             </Card>
           </Link>
 
           <Link href="/worker/availability" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <Clock className="w-5 h-5 text-emerald-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">Manage Availability</span>
-              <span className="text-[10px] text-slate-400">Weekly schedule</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">Availability</span>
+              <span className="text-[10px] text-slate-400 truncate block">Weekly schedule</span>
             </Card>
           </Link>
 
           <Link href="/worker/bookings" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <Calendar className="w-5 h-5 text-blue-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">View Requests</span>
-              <span className="text-[10px] text-slate-400">{pendingRequests.length} pending</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">Requests</span>
+              <span className="text-[10px] text-slate-400 truncate block">{pendingRequests.length} pending</span>
             </Card>
           </Link>
 
           <Link href="/worker/verification" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <ShieldCheck className="w-5 h-5 text-purple-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">CNIC Verification</span>
-              <span className="text-[10px] text-slate-400 capitalize">{verificationStatus.replace("_", " ")}</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">CNIC Verification</span>
+              <span className="text-[10px] text-slate-400 capitalize truncate block">{verificationStatus.replace("_", " ")}</span>
             </Card>
           </Link>
         </div>
 
         {/* Top 4 Metrics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <Card className="p-3.5 sm:p-5">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">
               New Requests
             </span>
-            <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-12" /> : pendingRequests.length}
+            <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
+              {loading ? <Skeleton className="h-7 w-12" /> : pendingRequests.length}
             </p>
-            <span className="text-[11px] text-amber-600 mt-1 block">Awaiting response</span>
+            <span className="text-[10px] sm:text-[11px] text-amber-600 mt-0.5 block truncate">Awaiting response</span>
           </Card>
 
-          <Card className="p-5">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+          <Card className="p-3.5 sm:p-5">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">
               Active / Scheduled
             </span>
-            <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-12" /> : upcomingJobs.length}
+            <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
+              {loading ? <Skeleton className="h-7 w-12" /> : upcomingJobs.length}
             </p>
-            <span className="text-[11px] text-primary-600 mt-1 block">Upcoming appointments</span>
+            <span className="text-[10px] sm:text-[11px] text-primary-600 mt-0.5 block truncate">Upcoming appointments</span>
           </Card>
 
-          <Card className="p-5">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+          <Card className="p-3.5 sm:p-5">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">
               Gross Earnings (Paid)
             </span>
-            <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(totalEarnings)}
+            <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
+              {loading ? <Skeleton className="h-7 w-20" /> : formatCurrency(totalEarnings)}
             </p>
             <span className="text-[11px] text-emerald-600 mt-1 block">
               {completedJobs.length} completed jobs

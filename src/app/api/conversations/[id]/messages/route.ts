@@ -3,6 +3,7 @@ import { db, schema } from "@/lib/db";
 import { eq, and, not, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { sendMessageSchema } from "@/lib/validations";
+import { triggerRealtimeEvent } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     // Mark messages from other user as read
-    await db
+    const updated = await db
       .update(schema.messages)
       .set({ isRead: true })
       .where(
@@ -58,7 +59,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           not(eq(schema.messages.senderId, user.id)),
           eq(schema.messages.isRead, false)
         )
-      );
+      )
+      .returning({ id: schema.messages.id });
+
+    if (updated.length > 0) {
+      triggerRealtimeEvent(`conversation-${id}`, "messages-read", {
+        conversationId: id,
+        readerId: user.id,
+      });
+    }
 
     const messages = await db.query.messages.findMany({
       where: eq(schema.messages.conversationId, id),
@@ -140,6 +149,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         },
       },
     });
+
+    // Broadcast real-time message to active participants
+    triggerRealtimeEvent(`conversation-${id}`, "new-message", fullMessage);
 
     return NextResponse.json({ success: true, message: fullMessage });
   } catch (error: any) {

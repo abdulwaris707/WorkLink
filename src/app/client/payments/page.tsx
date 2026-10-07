@@ -165,58 +165,105 @@ export default function ClientPaymentsPage() {
               />
             </Card>
           ) : (
-            <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200/90 shadow-card">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
-                    <th className="p-4">Transaction / Service</th>
-                    <th className="p-4">Worker</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {payments.map((p) => {
-                    const statusColors = getStatusColor(p.status);
-                    return (
-                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="p-4 font-semibold text-navy-900">
-                          {p.booking?.service?.title || "WorkLink Booking"}
-                          <span className="block text-[10px] text-slate-400 font-normal">
-                            Ref: {p.providerPaymentId || p.id.substring(0, 8)}
+            <>
+              {/* Mobile Card List (< md) */}
+              <div className="md:hidden space-y-3">
+                {payments.map((p) => {
+                  const statusColors = getStatusColor(p.status);
+                  return (
+                    <Card key={p.id} className="p-4 border-slate-200/90 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-bold text-navy-900">
+                            {p.booking?.service?.title || "WorkLink Booking"}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            Pro: {p.worker?.name || "Professional"}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
+                        >
+                          {p.status}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-semibold">Amount Paid</span>
+                          <span className="text-sm font-bold text-navy-900">
+                            {formatCurrency(p.amount, p.currency)}
                           </span>
-                        </td>
-                        <td className="p-4">{p.worker?.name || "Professional"}</td>
-                        <td className="p-4 text-slate-500">{formatDate(p.createdAt)}</td>
-                        <td className="p-4 font-bold text-navy-900">
-                          {formatCurrency(p.amount, p.currency)}
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
-                          >
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs"
-                            onClick={() => setReceiptPayment(p)}
-                            leftIcon={<FileText className="w-3.5 h-3.5" />}
-                          >
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="min-h-[36px] text-xs px-3"
+                          onClick={() => setReceiptPayment(p)}
+                          leftIcon={<FileText className="w-3.5 h-3.5" />}
+                        >
+                          View Receipt
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto bg-white rounded-2xl border border-slate-200/90 shadow-card">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
+                      <th className="p-4">Transaction / Service</th>
+                      <th className="p-4">Worker</th>
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Amount</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {payments.map((p) => {
+                      const statusColors = getStatusColor(p.status);
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="p-4 font-semibold text-navy-900">
+                            {p.booking?.service?.title || "WorkLink Booking"}
+                            <span className="block text-[10px] text-slate-400 font-normal">
+                              Ref: {p.providerPaymentId || p.id.substring(0, 8)}
+                            </span>
+                          </td>
+                          <td className="p-4">{p.worker?.name || "Professional"}</td>
+                          <td className="p-4 text-slate-500">{formatDate(p.createdAt)}</td>
+                          <td className="p-4 font-bold text-navy-900">
+                            {formatCurrency(p.amount, p.currency)}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
+                            >
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-xs"
+                              onClick={() => setReceiptPayment(p)}
+                              leftIcon={<FileText className="w-3.5 h-3.5" />}
+                            >
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

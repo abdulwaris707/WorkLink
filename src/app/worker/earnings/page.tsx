@@ -121,38 +121,72 @@ export default function WorkerEarningsPage() {
               />
             </Card>
           ) : (
-            <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200/90 shadow-card">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
-                    <th className="p-4">Service</th>
-                    <th className="p-4">Client</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Gross Amount</th>
-                    <th className="p-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-4 font-semibold text-navy-900">
-                        {p.booking?.service?.title || "Booking"}
-                      </td>
-                      <td className="p-4">{p.client?.name || "Client"}</td>
-                      <td className="p-4 text-slate-500">{formatDate(p.createdAt)}</td>
-                      <td className="p-4 font-bold text-emerald-600">
+            <>
+              {/* Mobile Card View (< md) */}
+              <div className="md:hidden space-y-3">
+                {payments.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-card space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-navy-900 truncate">
+                          {p.booking?.service?.title || "Booking Service"}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Client: {p.client?.name || "Client"}
+                        </p>
+                      </div>
+                      <Badge variant={p.status === "PAID" ? "success" : "warning"} size="sm">
+                        {p.status}
+                      </Badge>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-slate-400">{formatDate(p.createdAt)}</span>
+                      <span className="text-sm font-extrabold text-emerald-600">
                         +{formatCurrency(p.amount, p.currency)}
-                      </td>
-                      <td className="p-4">
-                        <Badge variant={p.status === "PAID" ? "success" : "warning"} size="sm">
-                          {p.status}
-                        </Badge>
-                      </td>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto bg-white rounded-2xl border border-slate-200/90 shadow-card">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
+                      <th className="p-4">Service</th>
+                      <th className="p-4">Client</th>
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Gross Amount</th>
+                      <th className="p-4">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {payments.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4 font-semibold text-navy-900">
+                          {p.booking?.service?.title || "Booking"}
+                        </td>
+                        <td className="p-4">{p.client?.name || "Client"}</td>
+                        <td className="p-4 text-slate-500">{formatDate(p.createdAt)}</td>
+                        <td className="p-4 font-bold text-emerald-600">
+                          +{formatCurrency(p.amount, p.currency)}
+                        </td>
+                        <td className="p-4">
+                          <Badge variant={p.status === "PAID" ? "success" : "warning"} size="sm">
+                            {p.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

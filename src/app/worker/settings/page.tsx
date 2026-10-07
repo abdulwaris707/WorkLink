@@ -7,6 +7,7 @@ import { Card } from "@/ui/Card";
 import { Button } from "@/ui/Button";
 import { Input } from "@/ui/Input";
 import { useToast } from "@/ui/Toast";
+import { ReportModal } from "@/components/dashboard/ReportModal";
 
 export default function WorkerSettingsPage() {
   const toast = useToast();
@@ -15,6 +16,7 @@ export default function WorkerSettingsPage() {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -111,7 +113,91 @@ export default function WorkerSettingsPage() {
             </div>
           </form>
         </Card>
+
+        {/* Support & Dispute Reports Section */}
+        <WorkerReportsHistorySection onOpenReportModal={() => setShowReportModal(true)} />
+
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+        />
       </div>
     </DashboardLayout>
+  );
+}
+
+function WorkerReportsHistorySection({ onOpenReportModal }: { onOpenReportModal: () => void }) {
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/reports")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.reports) setReports(data.reports);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <Card className="p-6 sm:p-8 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div>
+          <h3 className="text-sm font-bold text-navy-900">Support & Dispute Reports</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Report client payment issues, safety violations, or track ongoing investigations.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={onOpenReportModal}>
+          Report an Issue
+        </Button>
+      </div>
+
+      {loading ? (
+        <p className="text-xs text-slate-400 py-2">Loading report history...</p>
+      ) : reports.length === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-xs text-slate-500">No open or past dispute reports.</p>
+        </div>
+      ) : (
+        <div className="space-y-3 pt-2">
+          {reports.map((r) => (
+            <div
+              key={r.id}
+              className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-navy-900">{r.reason}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      r.status === "RESOLVED"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : r.status === "INVESTIGATING"
+                        ? "bg-blue-100 text-blue-800"
+                        : r.status === "DISMISSED"
+                        ? "bg-slate-200 text-slate-700"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {r.status}
+                  </span>
+                </div>
+                <p className="text-slate-600 mt-1 line-clamp-2">{r.details}</p>
+                {r.resolutionNotes && (
+                  <p className="text-emerald-700 font-medium mt-1">
+                    Moderator Note: {r.resolutionNotes}
+                  </p>
+                )}
+              </div>
+              <span className="text-[11px] text-slate-400 shrink-0">
+                {new Date(r.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }

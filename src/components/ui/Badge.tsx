@@ -15,11 +15,11 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variantStyles = {
     default: "bg-slate-100 text-slate-700 border-slate-200",
-    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    success: "bg-primary-50 text-primary-700 border-primary-200 font-semibold",
     warning: "bg-amber-50 text-amber-800 border-amber-200",
     error: "bg-rose-50 text-rose-700 border-rose-200",
-    info: "bg-primary-50 text-primary-700 border-primary-200",
-    outline: "bg-transparent text-slate-700 border-slate-300",
+    info: "bg-brandBlue-50 text-blue-700 border-blue-200",
+    outline: "bg-white text-navy-800 border-slate-200",
   };
 
   const sizeStyles = {

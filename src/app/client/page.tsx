@@ -93,12 +93,12 @@ export default function ClientOverviewPage() {
     <DashboardLayout role="CLIENT">
       <div className="space-y-8">
         {/* Welcome Greeting & Profile Completion Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-navy-900 via-navy-800 to-slate-900 text-white shadow-elevated">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-navy-900 via-navy-800 to-slate-900 text-white shadow-elevated">
           <div className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-primary-400">
               Welcome back
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
               {data.user?.name ? `Hello, ${data.user.name}` : "Client Dashboard"}
             </h1>
             <p className="text-xs text-slate-300 max-w-xl">
@@ -107,7 +107,7 @@ export default function ClientOverviewPage() {
           </div>
 
           {/* Profile Completion Box */}
-          <div className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-sm shrink-0 min-w-[220px]">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-sm shrink-0 min-w-0 sm:min-w-[220px]">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="font-semibold text-slate-200">Profile Completion</span>
               <span className="font-bold text-primary-300">{profilePercent}%</span>
@@ -128,50 +128,50 @@ export default function ClientOverviewPage() {
         </div>
 
         {/* Quick Action Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           <Link href="/workers" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <Search className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">Find Workers</span>
-              <span className="text-[10px] text-slate-400">Browse directory</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">Find Workers</span>
+              <span className="text-[10px] text-slate-400 truncate block">Browse directory</span>
             </Card>
           </Link>
 
           <Link href="/client/recommendations" className="group">
-            <Card hoverEffect className="p-4 text-center border-primary-200 bg-primary-50/30">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-primary-200 bg-primary-50/30">
               <Sparkles className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-primary-900 block">Smart Matches</span>
-              <span className="text-[10px] text-primary-600">Custom match ranking</span>
+              <span className="text-xs font-bold text-primary-900 block truncate">Smart Matches</span>
+              <span className="text-[10px] text-primary-600 truncate block">Custom ranking</span>
             </Card>
           </Link>
 
           <Link href="/client/bookings" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <Calendar className="w-5 h-5 text-emerald-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">My Bookings</span>
-              <span className="text-[10px] text-slate-400">{upcomingBookings.length} active jobs</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">My Bookings</span>
+              <span className="text-[10px] text-slate-400 truncate block">{upcomingBookings.length} active jobs</span>
             </Card>
           </Link>
 
           <Link href="/client/messages" className="group">
-            <Card hoverEffect className="p-4 text-center border-slate-200">
+            <Card hoverEffect className="p-3 sm:p-4 text-center border-slate-200">
               <MessageSquare className="w-5 h-5 text-blue-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-navy-900 block">Messages</span>
-              <span className="text-[10px] text-slate-400">Direct inbox</span>
+              <span className="text-xs font-bold text-navy-900 block truncate">Messages</span>
+              <span className="text-[10px] text-slate-400 truncate block">Direct inbox</span>
             </Card>
           </Link>
         </div>
 
         {/* Top Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <Card className="p-3.5 sm:p-5">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">
               Active Bookings
             </span>
-            <p className="text-2xl font-bold text-navy-900 mt-2">
-              {loading ? <Skeleton className="h-8 w-12" /> : upcomingBookings.length}
+            <p className="text-xl sm:text-2xl font-bold text-navy-900 mt-1 sm:mt-2">
+              {loading ? <Skeleton className="h-7 w-12" /> : upcomingBookings.length}
             </p>
-            <span className="text-[11px] text-primary-600 mt-1 block">Scheduled jobs</span>
+            <span className="text-[10px] sm:text-[11px] text-primary-600 mt-0.5 block truncate">Scheduled jobs</span>
           </Card>
 
           <Card className="p-5">
