@@ -4,6 +4,8 @@ import { eq, and, not, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { sendMessageSchema } from "@/lib/validations";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await getCurrentUser();

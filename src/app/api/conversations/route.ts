@@ -4,6 +4,8 @@ import { eq, or, and, desc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { createConversationSchema } from "@/lib/validations";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getCurrentUser();

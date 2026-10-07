@@ -38,8 +38,23 @@ export default function ClientMessagesPage() {
       const convList = data.conversations || [];
       setConversations(convList);
 
-      // Auto-select first conversation if none selected
-      if (!activeConversationId && convList.length > 0) {
+      const recipientId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("recipientId") : null;
+      if (recipientId) {
+        const existing = convList.find((c: any) => c.workerId === recipientId);
+        if (existing) {
+          setActiveConversationId(existing.id);
+        } else {
+          const createRes = await fetch("/api/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetUserId: recipientId }),
+          });
+          const createData = await createRes.json();
+          if (createData.conversationId) {
+            setActiveConversationId(createData.conversationId);
+          }
+        }
+      } else if (!activeConversationId && convList.length > 0) {
         setActiveConversationId(convList[0].id);
       }
     } catch {}

@@ -52,10 +52,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protected admin routes
+  if (pathname.startsWith("/admin")) {
+    if (!session || session.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/login?redirect=" + pathname, request.url));
+    }
+  }
+
   // Auth pages redirect if already logged in
   if (pathname === "/login" || pathname === "/signup") {
     if (session) {
-      const dest = session.role === "WORKER" ? "/worker" : "/client";
+      const dest = session.role === "ADMIN" ? "/admin/verifications" : session.role === "WORKER" ? "/worker" : "/client";
       return NextResponse.redirect(new URL(dest, request.url));
     }
   }
@@ -64,5 +71,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/client/:path*", "/worker/:path*", "/login", "/signup"],
+  matcher: ["/client/:path*", "/worker/:path*", "/admin/:path*", "/login", "/signup"],
 };

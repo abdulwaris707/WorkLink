@@ -25,6 +25,7 @@ import { Modal } from "@/ui/Modal";
 import { Textarea } from "@/ui/Input";
 import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
 import { useToast } from "@/ui/Toast";
+import { BookingDetailModal } from "@/components/dashboard/BookingDetailModal";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
 export default function WorkerBookingsPage() {
@@ -33,6 +34,7 @@ export default function WorkerBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
 
   // Notes Modal state
   const [notesBooking, setNotesBooking] = useState<any | null>(null);
@@ -239,6 +241,15 @@ export default function WorkerBookingsPage() {
                   {/* Actions Row */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        leftIcon={<FileText className="w-3.5 h-3.5" />}
+                        onClick={() => setSelectedBooking(b)}
+                      >
+                        Timeline & Details
+                      </Button>
+
                       <Link href="/worker/messages">
                         <Button
                           size="sm"
@@ -323,6 +334,17 @@ export default function WorkerBookingsPage() {
           </div>
         )}
       </div>
+
+      {/* Booking Detail & Timeline Modal */}
+      {selectedBooking && (
+        <BookingDetailModal
+          isOpen={Boolean(selectedBooking)}
+          onClose={() => setSelectedBooking(null)}
+          bookingId={selectedBooking.id}
+          role="WORKER"
+          onUpdate={fetchBookings}
+        />
+      )}
 
       {/* Add / Edit Notes Modal */}
       {notesBooking && (

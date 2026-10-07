@@ -1,0 +1,18 @@
+{
+  "name": "WorkLink - Skilled Services Marketplace",
+  "short_name": "WorkLink",
+  "description": "Connecting clients with vetted, verified skilled tradespeople and service specialists.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"]
+}

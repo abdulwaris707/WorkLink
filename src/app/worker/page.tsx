@@ -14,6 +14,11 @@ import {
   Check,
   X,
   ExternalLink,
+  ShieldCheck,
+  ShieldAlert,
+  ArrowRight,
+  PlusCircle,
+  Briefcase,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
@@ -27,7 +32,8 @@ export default function WorkerOverviewPage() {
     bookings: any[];
     conversations: any[];
     workerProfile: any;
-  }>({ bookings: [], conversations: [], workerProfile: null });
+    user: any;
+  }>({ bookings: [], conversations: [], workerProfile: null, user: null });
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -49,6 +55,7 @@ export default function WorkerOverviewPage() {
         bookings: bData.bookings || [],
         conversations: cData.conversations || [],
         workerProfile: pData.profile?.workerProfile || null,
+        user: pData.profile || null,
       });
     } catch {
     } finally {
@@ -79,28 +86,77 @@ export default function WorkerOverviewPage() {
   );
   const completedJobs = data.bookings.filter((b) => b.status === "COMPLETED");
 
+  // Real earnings based only on real paid bookings
   const totalEarnings = data.bookings
     .filter((b) => b.paymentStatus === "PAID")
     .reduce((sum, b) => sum + (b.quotedPrice || 0), 0);
 
+  const nonPendingCount = data.bookings.filter((b) => b.status !== "PENDING").length;
   const completionRate =
-    data.bookings.length > 0
-      ? Math.round(
-          (completedJobs.length /
-            (data.bookings.filter((b) => b.status !== "PENDING").length || 1)) *
-            100
-        )
+    nonPendingCount > 0
+      ? Math.round((completedJobs.length / nonPendingCount) * 100)
       : 100;
+
+  // Profile completion calculation
+  const profileSteps = [
+    Boolean(data.workerProfile?.bio && data.workerProfile.bio.length > 20),
+    Boolean(data.workerProfile?.category),
+    Boolean(data.workerProfile?.skills && data.workerProfile.skills.length > 0),
+    Boolean(data.workerProfile?.startingPrice),
+    Boolean(data.workerProfile?.serviceArea),
+    Boolean(data.workerProfile?.services && data.workerProfile.services.length > 0),
+  ];
+  const completedStepCount = profileSteps.filter(Boolean).length;
+  const profilePercent = Math.round((completedStepCount / profileSteps.length) * 100);
+
+  const verificationStatus = data.workerProfile?.verificationStatus || "not_started";
 
   return (
     <DashboardLayout role="WORKER">
       <div className="space-y-8">
-        {/* Welcome Top Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Verification Status Warning / Action Banner */}
+        {verificationStatus !== "approved" && !loading && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-bold text-amber-950">
+                  {verificationStatus === "submitted" || verificationStatus === "under_review"
+                    ? "Identity Verification Under Review"
+                    : verificationStatus === "needs_resubmission"
+                    ? "Action Needed: Please Resubmit Documents"
+                    : "Identity Verification Required"}
+                </h4>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  {verificationStatus === "submitted" || verificationStatus === "under_review"
+                    ? "Your CNIC documents are being verified by our compliance team. Public bookings activate once approved."
+                    : "Upload your physical CNIC front and back photos to become publicly visible and accept client bookings."}
+                </p>
+              </div>
+            </div>
+            <Link href="/worker/verification" className="shrink-0">
+              <Button size="sm" variant="primary" className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
+                {verificationStatus === "submitted" || verificationStatus === "under_review"
+                  ? "View Status"
+                  : "Verify Now"}
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Top Header & Profile Progress */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-navy-900">Worker Dashboard</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Manage incoming jobs, accept requests, track revenue, and communicate with clients.
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-extrabold text-navy-900">Worker Dashboard</h1>
+              {verificationStatus === "approved" && (
+                <Badge variant="success" size="sm">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Verified Pro
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-slate-500">
+              Manage incoming requests, track real revenue, update weekly availability, and communicate with clients.
             </p>
           </div>
           <div className="flex items-center gap-2.5">
@@ -119,6 +175,41 @@ export default function WorkerOverviewPage() {
           </div>
         </div>
 
+        {/* Quick Action Navigation Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Link href="/worker/services" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <Layers className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">Add / Edit Services</span>
+              <span className="text-[10px] text-slate-400">Manage service menu</span>
+            </Card>
+          </Link>
+
+          <Link href="/worker/availability" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <Clock className="w-5 h-5 text-emerald-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">Manage Availability</span>
+              <span className="text-[10px] text-slate-400">Weekly schedule</span>
+            </Card>
+          </Link>
+
+          <Link href="/worker/bookings" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <Calendar className="w-5 h-5 text-blue-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">View Requests</span>
+              <span className="text-[10px] text-slate-400">{pendingRequests.length} pending</span>
+            </Card>
+          </Link>
+
+          <Link href="/worker/verification" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <ShieldCheck className="w-5 h-5 text-purple-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">CNIC Verification</span>
+              <span className="text-[10px] text-slate-400 capitalize">{verificationStatus.replace("_", " ")}</span>
+            </Card>
+          </Link>
+        </div>
+
         {/* Top 4 Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-5">
@@ -128,7 +219,7 @@ export default function WorkerOverviewPage() {
             <p className="text-2xl font-bold text-navy-900 mt-2">
               {loading ? <Skeleton className="h-8 w-12" /> : pendingRequests.length}
             </p>
-            <span className="text-[11px] text-amber-600 mt-1 block">Awaiting your response</span>
+            <span className="text-[11px] text-amber-600 mt-1 block">Awaiting response</span>
           </Card>
 
           <Card className="p-5">
@@ -143,7 +234,7 @@ export default function WorkerOverviewPage() {
 
           <Card className="p-5">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Gross Earnings
+              Gross Earnings (Paid)
             </span>
             <p className="text-2xl font-bold text-navy-900 mt-2">
               {loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(totalEarnings)}
@@ -155,16 +246,13 @@ export default function WorkerOverviewPage() {
 
           <Card className="p-5">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Average Rating
+              Job Completion Rate
             </span>
             <div className="flex items-center gap-1.5 mt-2">
-              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-              <span className="text-2xl font-bold text-navy-900">
-                {data.workerProfile?.rating?.toFixed(1) || "5.0"}
-              </span>
+              <span className="text-2xl font-bold text-navy-900">{completionRate}%</span>
             </div>
             <span className="text-[11px] text-slate-400 mt-1 block">
-              {data.workerProfile?.reviewCount || 0} client reviews
+              Rating: {data.workerProfile?.rating?.toFixed(1) || "5.0"} ★ ({data.workerProfile?.reviewCount || 0} reviews)
             </span>
           </Card>
         </div>
@@ -198,9 +286,8 @@ export default function WorkerOverviewPage() {
                       <h4 className="text-sm font-bold text-navy-900">
                         {req.service.title} • {formatCurrency(req.quotedPrice)}
                       </h4>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        Client: <span className="font-semibold">{req.client.name}</span>
-                        {req.client.phone && <span> ({req.client.phone})</span>}
+                      <p className="text-xs text-slate-500">
+                        Client: <span className="font-semibold text-navy-800">{req.client.name}</span>
                       </p>
                       <div className="flex items-center gap-3 text-xs text-slate-500 mt-1.5">
                         <span className="flex items-center gap-1">
@@ -232,7 +319,6 @@ export default function WorkerOverviewPage() {
                       variant="primary"
                       onClick={() => handleUpdateStatus(req.id, "ACCEPTED")}
                       isLoading={actionLoadingId === req.id}
-                      leftIcon={<Check className="w-4 h-4" />}
                     >
                       Accept Job
                     </Button>
@@ -243,58 +329,58 @@ export default function WorkerOverviewPage() {
           </div>
         )}
 
-        {/* Main Grid: Scheduled Jobs & Messages */}
+        {/* Schedule & Messages Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Scheduled Upcoming Jobs (2 cols) */}
+          {/* Upcoming Accepted Jobs (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-navy-900">Scheduled Jobs</h2>
-              <Link
-                href="/worker/bookings"
-                className="text-xs font-semibold text-primary-600 hover:underline"
-              >
-                View all bookings
+              <h2 className="text-base font-bold text-navy-900">Upcoming Scheduled Jobs</h2>
+              <Link href="/worker/bookings" className="text-xs font-semibold text-primary-600 hover:underline">
+                View all
               </Link>
             </div>
 
             {loading ? (
               <div className="space-y-3">
-                <Skeleton className="h-24 w-full rounded-2xl" />
-                <Skeleton className="h-24 w-full rounded-2xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
               </div>
             ) : upcomingJobs.length === 0 ? (
               <Card className="p-8 text-center">
                 <EmptyState
-                  icon={<Calendar className="w-6 h-6 text-slate-400" />}
-                  title="No Jobs Scheduled"
-                  description="Accepted bookings and in-progress service requests will appear here."
+                  icon={<Calendar className="w-5 h-5 text-slate-400" />}
+                  title="No Scheduled Jobs"
+                  description="You don't have any accepted or in-progress jobs scheduled."
+                  action={
+                    <Link href="/worker/services">
+                      <Button size="sm" variant="outline">
+                        Check Services
+                      </Button>
+                    </Link>
+                  }
                 />
               </Card>
             ) : (
               <div className="space-y-3">
-                {upcomingJobs.slice(0, 4).map((b) => {
-                  const statusColors = getStatusColor(b.status);
+                {upcomingJobs.slice(0, 4).map((job) => {
+                  const statusColors = getStatusColor(job.status);
                   return (
-                    <Card key={b.id} hoverEffect className="p-4 flex items-center justify-between gap-4">
-                      <div className="flex items-start gap-3.5 min-w-0">
-                        <Avatar
-                          name={b.client.name}
-                          src={b.client.avatarUrl}
-                          size="md"
-                          className="rounded-xl"
-                        />
+                    <Card key={job.id} hoverEffect className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <Avatar name={job.client.name} src={job.client.avatarUrl} size="md" />
                         <div className="min-w-0">
                           <h4 className="text-sm font-bold text-navy-900 truncate">
-                            {b.service.title}
+                            {job.service.title}
                           </h4>
                           <p className="text-xs text-slate-500">
-                            Client: <span className="font-semibold text-navy-800">{b.client.name}</span>
-                            {b.client.location && ` • ${b.client.location}`}
+                            Client: <span className="font-semibold text-navy-800">{job.client.name}</span>
                           </p>
                           <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
-                            <span>{formatDate(b.bookingDate)}</span>
+                            <span>{formatDate(job.bookingDate)}</span>
                             <span>•</span>
-                            <span>{b.timeSlot}</span>
+                            <span>{job.timeSlot}</span>
+                            <span>•</span>
+                            <span className="font-bold text-navy-900">{formatCurrency(job.quotedPrice)}</span>
                           </div>
                         </div>
                       </div>
@@ -303,7 +389,7 @@ export default function WorkerOverviewPage() {
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}
                         >
-                          {b.status.replace("_", " ")}
+                          {job.status.replace("_", " ")}
                         </span>
                         <Link href="/worker/bookings">
                           <Button size="sm" variant="outline" className="h-7 text-xs">
@@ -318,16 +404,13 @@ export default function WorkerOverviewPage() {
             )}
           </div>
 
-          {/* Right Column: Client Chats */}
+          {/* Right Column: Recent Messages */}
           <div className="space-y-6">
             <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-navy-900">Client Conversations</h3>
-                <Link
-                  href="/worker/messages"
-                  className="text-xs font-semibold text-primary-600 hover:underline"
-                >
-                  Open Inbox
+                <h3 className="text-sm font-bold text-navy-900">Recent Inquiries</h3>
+                <Link href="/worker/messages" className="text-xs font-semibold text-primary-600 hover:underline">
+                  Inbox
                 </Link>
               </div>
 
@@ -337,31 +420,22 @@ export default function WorkerOverviewPage() {
                   <Skeleton className="h-12 w-full rounded-xl" />
                 </div>
               ) : data.conversations.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-6">
-                  No client messages yet
-                </p>
+                <p className="text-xs text-slate-400 text-center py-6">No client messages</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {data.conversations.slice(0, 4).map((conv) => (
+                  {data.conversations.slice(0, 3).map((conv) => (
                     <Link
                       key={conv.id}
                       href="/worker/messages"
-                      className="py-3 first:pt-0 last:pb-0 flex items-center justify-between hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors"
+                      className="py-3 flex items-center gap-3 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition-colors block"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Avatar name={conv.client.name} src={conv.client.avatarUrl} size="sm" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-navy-900 truncate">
-                            {conv.client.name}
-                          </p>
-                          <p className="text-[11px] text-slate-500 truncate max-w-[150px]">
-                            {conv.messages[0]?.content || "No messages"}
-                          </p>
-                        </div>
+                      <Avatar name={conv.client.name} src={conv.client.avatarUrl} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-navy-900 truncate">{conv.client.name}</p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {conv.messages?.[0]?.content || "Click to open chat"}
+                        </p>
                       </div>
-                      <span className="text-[10px] text-slate-400">
-                        {conv.messages[0] && formatDate(conv.messages[0].createdAt)}
-                      </span>
                     </Link>
                   ))}
                 </div>

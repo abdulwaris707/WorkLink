@@ -33,6 +33,15 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "REFUNDED",
 ]);
 
+export const verificationStatusEnum = pgEnum("verification_status", [
+  "not_started",
+  "submitted",
+  "under_review",
+  "approved",
+  "rejected",
+  "needs_resubmission",
+]);
+
 export const notificationTypeEnum = pgEnum("notification_type", [
   "BOOKING_REQUEST",
   "BOOKING_ACCEPTED",
@@ -42,6 +51,10 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "PAYMENT_UPDATE",
   "REVIEW_RECEIVED",
   "REMINDER",
+  "VERIFICATION_UPDATE",
+  "BOOKING_RESCHEDULED",
+  "BOOKING_CANCELLED",
+  "BOOKING_IN_PROGRESS",
 ]);
 
 // 1. Users table
@@ -104,11 +117,18 @@ export const workerProfiles = pgTable(
     serviceArea: varchar("service_area", { length: 255 }).default("Metro Area").notNull(),
     responseTime: varchar("response_time", { length: 100 }).default("Within 1 hour").notNull(),
     isAvailable: boolean("is_available").default(true).notNull(),
-    isVerified: boolean("is_verified").default(true).notNull(),
+    isVerified: boolean("is_verified").default(false).notNull(),
+    verificationStatus: verificationStatusEnum("verification_status").default("not_started").notNull(),
+    cnicMasked: varchar("cnic_masked", { length: 30 }),
+    cnicFrontKey: text("cnic_front_key"),
+    cnicBackKey: text("cnic_back_key"),
+    rejectionReason: text("rejection_reason"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    verifiedBy: uuid("verified_by").references(() => users.id, { onDelete: "set null" }),
     rating: doublePrecision("rating").default(5.0).notNull(),
     reviewCount: integer("review_count").default(0).notNull(),
     portfolioImages: jsonb("portfolio_images").$type<string[]>().default([]).notNull(),
-    isPublished: boolean("is_published").default(true).notNull(),
+    isPublished: boolean("is_published").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -117,7 +137,28 @@ export const workerProfiles = pgTable(
     slugIdx: uniqueIndex("worker_profiles_slug_idx").on(table.slug),
     categoryIdx: index("worker_profiles_category_idx").on(table.category),
     publishedIdx: index("worker_profiles_published_idx").on(table.isPublished),
+    verificationIdx: index("worker_profiles_verification_idx").on(table.verificationStatus),
     ratingIdx: index("worker_profiles_rating_idx").on(table.rating),
+  })
+);
+
+// 3.5. Verification activity audit trail
+export const verificationActivity = pgTable(
+  "verification_activity",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workerProfileId: uuid("worker_profile_id")
+      .notNull()
+      .references(() => workerProfiles.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    action: varchar("action", { length: 50 }).notNull(), // SUBMITTED, APPROVED, REJECTED, RESUBMISSION_REQUESTED
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    workerProfileIdIdx: index("verification_activity_worker_id_idx").on(table.workerProfileId),
   })
 );
 
@@ -378,6 +419,18 @@ export const workerProfilesRelations = relations(workerProfiles, ({ one, many })
   }),
   services: many(services),
   availability: many(availability),
+  verificationActivities: many(verificationActivity),
+}));
+
+export const verificationActivityRelations = relations(verificationActivity, ({ one }) => ({
+  workerProfile: one(workerProfiles, {
+    fields: [verificationActivity.workerProfileId],
+    references: [workerProfiles.id],
+  }),
+  actor: one(users, {
+    fields: [verificationActivity.actorId],
+    references: [users.id],
+  }),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({

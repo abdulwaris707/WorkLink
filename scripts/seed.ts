@@ -37,6 +37,17 @@ async function runSeed() {
 
   const passwordHash = await bcrypt.hash("password123", 10);
 
+  // 0. Demo Admin: Moderator
+  await db.insert(schema.users).values({
+    email: "admin@worklink.com",
+    passwordHash,
+    name: "Admin Moderator",
+    role: "ADMIN",
+    phone: "+1 (555) 000-1111",
+    location: "Operations HQ",
+    avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
+  });
+
   // 1. Demo Client: Jessica Reynolds
   const [clientUser] = await db
     .insert(schema.users)
@@ -87,6 +98,8 @@ async function runSeed() {
       responseTime: "Under 30 mins",
       isAvailable: true,
       isVerified: true,
+      verificationStatus: "approved",
+      cnicMasked: "42101-*******-3",
       rating: 4.95,
       reviewCount: 38,
       portfolioImages: [
@@ -162,6 +175,8 @@ async function runSeed() {
       responseTime: "Under 1 hour",
       isAvailable: true,
       isVerified: true,
+      verificationStatus: "approved",
+      cnicMasked: "35202-*******-8",
       rating: 4.98,
       reviewCount: 52,
       portfolioImages: [

@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getCurrentUser();

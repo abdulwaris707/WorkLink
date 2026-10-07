@@ -14,6 +14,10 @@ import {
   ArrowRight,
   ShieldCheck,
   ChevronRight,
+  Sparkles,
+  Bell,
+  UserCheck,
+  PlusCircle,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/ui/Button";
@@ -24,31 +28,39 @@ import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
 export default function ClientOverviewPage() {
   const [data, setData] = useState<{
+    user: any | null;
     bookings: any[];
     conversations: any[];
     recommendedWorkers: any[];
-  }>({ bookings: [], conversations: [], recommendedWorkers: [] });
+    notifications: any[];
+  }>({ user: null, bookings: [], conversations: [], recommendedWorkers: [], notifications: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [bookingsRes, convsRes, workersRes] = await Promise.all([
+        const [meRes, bookingsRes, convsRes, workersRes, notifsRes] = await Promise.all([
+          fetch("/api/auth/me"),
           fetch("/api/bookings"),
           fetch("/api/conversations"),
           fetch("/api/workers?sort=recommended"),
+          fetch("/api/notifications"),
         ]);
 
-        const [bData, cData, wData] = await Promise.all([
+        const [meData, bData, cData, wData, nData] = await Promise.all([
+          meRes.json(),
           bookingsRes.json(),
           convsRes.json(),
           workersRes.json(),
+          notifsRes.json(),
         ]);
 
         setData({
+          user: meData.user || null,
           bookings: bData.bookings || [],
           conversations: cData.conversations || [],
           recommendedWorkers: (wData.workers || []).slice(0, 3),
+          notifications: (nData.notifications || []).slice(0, 3),
         });
       } catch {
       } finally {
@@ -66,29 +78,88 @@ export default function ClientOverviewPage() {
     .filter((b) => b.paymentStatus === "PAID")
     .reduce((sum, b) => sum + (b.quotedPrice || 0), 0);
 
+  // Profile completion calculation
+  const profileSteps = [
+    Boolean(data.user?.name),
+    Boolean(data.user?.email),
+    Boolean(data.user?.phone),
+    Boolean(data.user?.location),
+    Boolean(data.user?.avatarUrl),
+  ];
+  const completedStepCount = profileSteps.filter(Boolean).length;
+  const profilePercent = Math.round((completedStepCount / profileSteps.length) * 100);
+
   return (
     <DashboardLayout role="CLIENT">
       <div className="space-y-8">
-        {/* Welcome Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold text-navy-900">Client Overview</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Manage your upcoming service appointments, messages, and invoices.
+        {/* Welcome Greeting & Profile Completion Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-navy-900 via-navy-800 to-slate-900 text-white shadow-elevated">
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-primary-400">
+              Welcome back
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              {data.user?.name ? `Hello, ${data.user.name}` : "Client Dashboard"}
+            </h1>
+            <p className="text-xs text-slate-300 max-w-xl">
+              Find verified tradespeople, track live appointment timelines, and securely chat with your service providers.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/workers">
-              <Button variant="primary" size="sm" leftIcon={<Search className="w-4 h-4" />}>
-                Find a Worker
-              </Button>
-            </Link>
-            <Link href="/client/bookings">
-              <Button variant="outline" size="sm">
-                View All Bookings
-              </Button>
+
+          {/* Profile Completion Box */}
+          <div className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-sm shrink-0 min-w-[220px]">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="font-semibold text-slate-200">Profile Completion</span>
+              <span className="font-bold text-primary-300">{profilePercent}%</span>
+            </div>
+            <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-primary-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${profilePercent}%` }}
+              />
+            </div>
+            <Link
+              href="/client/settings"
+              className="text-[11px] text-primary-300 hover:text-white mt-2 block font-medium"
+            >
+              Complete profile details →
             </Link>
           </div>
+        </div>
+
+        {/* Quick Action Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Link href="/workers" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <Search className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">Find Workers</span>
+              <span className="text-[10px] text-slate-400">Browse directory</span>
+            </Card>
+          </Link>
+
+          <Link href="/client/recommendations" className="group">
+            <Card hoverEffect className="p-4 text-center border-primary-200 bg-primary-50/30">
+              <Sparkles className="w-5 h-5 text-primary-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-primary-900 block">Smart Matches</span>
+              <span className="text-[10px] text-primary-600">Custom match ranking</span>
+            </Card>
+          </Link>
+
+          <Link href="/client/bookings" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <Calendar className="w-5 h-5 text-emerald-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">My Bookings</span>
+              <span className="text-[10px] text-slate-400">{upcomingBookings.length} active jobs</span>
+            </Card>
+          </Link>
+
+          <Link href="/client/messages" className="group">
+            <Card hoverEffect className="p-4 text-center border-slate-200">
+              <MessageSquare className="w-5 h-5 text-blue-600 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-navy-900 block">Messages</span>
+              <span className="text-[10px] text-slate-400">Direct inbox</span>
+            </Card>
+          </Link>
         </div>
 
         {/* Top Metric Cards */}
@@ -223,8 +294,9 @@ export default function ClientOverviewPage() {
             )}
           </div>
 
-          {/* Right Column: Recent Messages & Quick Help */}
+          {/* Right Column: Recent Messages & Notification Preview */}
           <div className="space-y-6">
+            {/* Recent Messages */}
             <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-navy-900">Recent Messages</h3>
@@ -251,53 +323,52 @@ export default function ClientOverviewPage() {
                     <Link
                       key={conv.id}
                       href="/client/messages"
-                      className="py-3 first:pt-0 last:pb-0 flex items-center justify-between hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors group"
+                      className="py-3 flex items-center gap-3 hover:bg-slate-50/70 -mx-2 px-2 rounded-lg transition-colors block"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Avatar name={conv.worker.name} src={conv.worker.avatarUrl} size="sm" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-navy-900 group-hover:text-primary-600 transition-colors truncate">
-                            {conv.worker.name}
-                          </p>
-                          <p className="text-[11px] text-slate-500 truncate max-w-[150px]">
-                            {conv.messages[0]?.content || "No messages"}
-                          </p>
-                        </div>
+                      <Avatar name={conv.worker.name} src={conv.worker.avatarUrl} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-navy-900 truncate">
+                          {conv.worker.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {conv.messages?.[0]?.content || "Click to view chat"}
+                        </p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary-600" />
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     </Link>
                   ))}
                 </div>
               )}
             </Card>
 
-            {/* Recommended Pros Card */}
+            {/* Notification Preview */}
             <Card className="p-5">
-              <h3 className="text-sm font-bold text-navy-900 mb-3">Recommended Pros</h3>
-              <div className="space-y-3">
-                {data.recommendedWorkers.map((w) => (
-                  <Link
-                    key={w.id}
-                    href={`/workers/${w.slug}`}
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors group"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={w.user.name} src={w.user.avatarUrl} size="sm" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-navy-900 group-hover:text-primary-600 transition-colors truncate">
-                          {w.user.name}
-                        </p>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          {w.category} • {formatCurrency(w.startingPrice)}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[11px] font-semibold text-primary-600 group-hover:underline">
-                      Hire
-                    </span>
-                  </Link>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-1.5">
+                  <Bell className="w-4 h-4 text-primary-600" /> Notifications
+                </h3>
+                <Link
+                  href="/client/notifications"
+                  className="text-xs font-semibold text-primary-600 hover:underline"
+                >
+                  View all
+                </Link>
               </div>
+
+              {loading ? (
+                <Skeleton className="h-16 w-full rounded-xl" />
+              ) : data.notifications.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">No recent alerts</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {data.notifications.map((n) => (
+                    <div key={n.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                      <p className="font-bold text-navy-900 truncate">{n.title}</p>
+                      <p className="text-slate-500 text-[11px] line-clamp-1">{n.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>

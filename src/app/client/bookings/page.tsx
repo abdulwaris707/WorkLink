@@ -26,6 +26,7 @@ import { Avatar, Skeleton, EmptyState } from "@/ui/Feedback";
 import { Modal } from "@/ui/Modal";
 import { PaymentModal } from "@/components/dashboard/PaymentModal";
 import { ReviewModal } from "@/components/dashboard/ReviewModal";
+import { BookingDetailModal } from "@/components/dashboard/BookingDetailModal";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
 export default function ClientBookingsPage() {
@@ -236,7 +237,16 @@ export default function ClientBookingsPage() {
                   {/* Action buttons row */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                     <div className="flex items-center gap-2">
-                      <Link href="/client/messages">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        leftIcon={<FileText className="w-3.5 h-3.5" />}
+                        onClick={() => setSelectedBooking(b)}
+                      >
+                        Timeline & Details
+                      </Button>
+
+                      <Link href={`/client/messages?recipientId=${b.workerId}`}>
                         <Button
                           size="sm"
                           variant="outline"
@@ -315,6 +325,17 @@ export default function ClientBookingsPage() {
           onClose={() => setReviewBooking(null)}
           booking={reviewBooking}
           onSuccess={fetchBookings}
+        />
+      )}
+
+      {/* Booking Detail & Timeline Modal */}
+      {selectedBooking && (
+        <BookingDetailModal
+          isOpen={Boolean(selectedBooking)}
+          onClose={() => setSelectedBooking(null)}
+          bookingId={selectedBooking.id}
+          role="CLIENT"
+          onUpdate={fetchBookings}
         />
       )}
 

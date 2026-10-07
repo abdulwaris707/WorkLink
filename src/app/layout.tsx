@@ -8,12 +8,19 @@ export const metadata: Metadata = {
     "Find vetted local trade professionals and digital specialists. Book appointments, chat securely, and manage projects seamlessly with WorkLink.",
   keywords: ["home services", "electrician", "plumber", "cleaning", "handyman", "freelance marketplace", "vetted workers"],
   authors: [{ name: "WorkLink Team" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WorkLink",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({

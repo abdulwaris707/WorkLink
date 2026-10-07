@@ -4,6 +4,8 @@ import { eq, and, desc, or, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { createBookingSchema } from "@/lib/validations";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -166,6 +168,25 @@ export async function POST(req: NextRequest) {
 
     if (!workerUser) {
       return NextResponse.json({ error: "Worker not found." }, { status: 404 });
+    }
+
+    // Verify worker profile is approved and published
+    const [workerProfile] = await db
+      .select({
+        id: schema.workerProfiles.id,
+        isVerified: schema.workerProfiles.isVerified,
+        verificationStatus: schema.workerProfiles.verificationStatus,
+        isPublished: schema.workerProfiles.isPublished,
+      })
+      .from(schema.workerProfiles)
+      .where(eq(schema.workerProfiles.userId, workerId))
+      .limit(1);
+
+    if (!workerProfile || workerProfile.verificationStatus !== "approved" || !workerProfile.isVerified) {
+      return NextResponse.json(
+        { error: "This worker is undergoing identity verification and cannot accept bookings yet." },
+        { status: 400 }
+      );
     }
 
     const targetDate = new Date(bookingDate);

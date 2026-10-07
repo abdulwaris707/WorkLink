@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and, gte, lte, ilike, or, desc, asc, sql } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -16,6 +18,8 @@ export async function GET(req: NextRequest) {
 
     const conditions = [
       eq(schema.workerProfiles.isPublished, true),
+      eq(schema.workerProfiles.verificationStatus, "approved"),
+      eq(schema.workerProfiles.isVerified, true),
       eq(schema.users.role, "WORKER"),
     ];
 
