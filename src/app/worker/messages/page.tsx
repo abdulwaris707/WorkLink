@@ -248,11 +248,14 @@ export default function WorkerMessagesPage() {
             showMobileChat ? "hidden sm:flex" : "flex"
           }`}
         >
-            {/* Inbox Search & Title */}
-            <div className="p-3.5 border-b border-slate-100 space-y-2">
+            {/* Sticky Inbox Header */}
+            <div className="p-3.5 border-b border-slate-200/80 space-y-2 sticky top-0 z-20 bg-white shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Client Chats ({conversations.length})
+                <h1 className="text-xl font-extrabold text-navy-900 tracking-tight">
+                  Client Messages
+                </h1>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700">
+                  {conversations.length} {conversations.length === 1 ? "chat" : "chats"}
                 </span>
               </div>
               <div className="relative">
@@ -345,7 +348,7 @@ export default function WorkerMessagesPage() {
             {activeConversation ? (
               <>
                 {/* Chat Top Banner with Back button on mobile */}
-                <div className="p-3.5 sm:p-4 bg-white border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-10 shadow-subtle">
+                <div className="p-3.5 sm:p-4 bg-white/98 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-20 shadow-xs">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
                       onClick={handleBackToInbox}

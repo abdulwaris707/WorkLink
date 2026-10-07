@@ -95,57 +95,67 @@ function WorkersDirectoryContent() {
 
   const directoryBody = (
     <div className="flex-1 w-full">
-      {/* Header Banner */}
-      <div className="bg-white border-b border-slate-200/80 py-8">
+      {/* Sticky Header Banner */}
+      <div className="sticky top-0 z-20 bg-white/98 backdrop-blur-md border-b border-slate-200/80 py-3 sm:py-6 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900">
-            Find Skilled Professionals
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Browse verified local contractors, trade experts, and specialized service pros.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-navy-900 tracking-tight">
+                  Explore Workers
+                </h1>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700">
+                  {workers.length} {workers.length === 1 ? "pro" : "pros"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
+                Browse verified local contractors, trade experts, and specialized service pros.
+              </p>
+            </div>
 
-          {/* Search Bar & Quick Categories */}
-          <div className="mt-6 flex flex-col md:flex-row gap-3">
+            <button
+              onClick={() => setMobileFiltersOpen(true)}
+              className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-navy-900 active:scale-95 shadow-xs"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
+              <span>Filters</span>
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mt-3 flex flex-col sm:flex-row gap-2.5">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by worker name, skill, or service (e.g., Electrician, Deep Cleaning)..."
+                placeholder="Search by worker name, skill, or service (e.g. Electrician, Cleaning)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-navy-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-navy-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all"
               />
             </div>
 
-            <div className="relative md:w-56">
+            <div className="relative sm:w-56 hidden sm:block">
               <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="City or neighborhood..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-navy-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-navy-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all"
               />
             </div>
-
-            <button
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-navy-800"
-            >
-              <SlidersHorizontal className="w-4 h-4" /> Filters
-            </button>
           </div>
 
           {/* Category Chips Bar */}
-          <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
+                className={`px-3 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all ${
                   category === cat
-                    ? "bg-primary-600 text-white shadow-sm"
+                    ? "bg-primary-600 text-white shadow-xs font-bold"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-navy-900"
                 }`}
               >

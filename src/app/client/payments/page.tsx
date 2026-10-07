@@ -60,9 +60,10 @@ export default function ClientPaymentsPage() {
   return (
     <DashboardLayout role="CLIENT">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-navy-900">Payments & Receipts</h1>
-          <p className="text-xs text-slate-500 mt-1">
+        {/* Sticky Header Bar */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 -mt-3.5 sm:-mt-6 lg:-mt-8 -mx-3.5 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs mb-6">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">Payments & Receipts</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Review your past invoices, verify payment IDs, and complete open balances.
           </p>
         </div>

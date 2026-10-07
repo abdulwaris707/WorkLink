@@ -8,6 +8,7 @@ import { Button } from "@/ui/Button";
 import { Input } from "@/ui/Input";
 import { useToast } from "@/ui/Toast";
 import { ReportModal } from "@/components/dashboard/ReportModal";
+import { PlatformLegalSettings } from "@/components/dashboard/PlatformLegalSettings";
 
 export default function WorkerSettingsPage() {
   const toast = useToast();
@@ -55,10 +56,11 @@ export default function WorkerSettingsPage() {
   return (
     <DashboardLayout role="WORKER">
       <div className="max-w-3xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-navy-900">Worker Settings</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage your account credentials, notifications, and security.
+        {/* Sticky Header Bar */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 -mt-3.5 sm:-mt-6 lg:-mt-8 -mx-3.5 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs mb-6">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">Worker Settings</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage your credentials, platform safety policies, and marketplace info.
           </p>
         </div>
 
@@ -116,6 +118,9 @@ export default function WorkerSettingsPage() {
 
         {/* Support & Dispute Reports Section */}
         <WorkerReportsHistorySection onOpenReportModal={() => setShowReportModal(true)} />
+
+        {/* Platform Legal & Footer Information Moved to Settings */}
+        <PlatformLegalSettings />
 
         <ReportModal
           isOpen={showReportModal}

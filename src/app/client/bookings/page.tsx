@@ -91,35 +91,38 @@ export default function ClientBookingsPage() {
   return (
     <DashboardLayout role="CLIENT">
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold text-navy-900">My Bookings</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Track status, reschedule appointments, process payments, and write reviews.
-            </p>
+        {/* Sticky Header & Tabs Bar */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 -mt-3.5 sm:-mt-6 lg:-mt-8 -mx-3.5 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs mb-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-navy-900 tracking-tight">My Bookings</h1>
+              <p className="text-xs text-slate-500 hidden sm:block mt-0.5">
+                Track status, reschedule appointments, process payments, and write reviews.
+              </p>
+            </div>
+            <Link href="/workers">
+              <Button size="sm" variant="primary">
+                Book New
+              </Button>
+            </Link>
           </div>
-          <Link href="/workers">
-            <Button size="sm" variant="primary">
-              Book New Service
-            </Button>
-          </Link>
-        </div>
 
-        {/* Tab Filters */}
-        <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1 no-scrollbar">
-          {tabs.map((tab) => (
-            <button
-              key={tab.val}
-              onClick={() => setActiveTab(tab.val)}
-              className={`px-3.5 py-2 text-xs font-semibold shrink-0 border-b-2 transition-all ${
-                activeTab === tab.val
-                  ? "border-primary-600 text-primary-600"
-                  : "border-transparent text-slate-500 hover:text-navy-900"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {/* Tab Filters */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-3 pb-0.5 no-scrollbar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.val}
+                onClick={() => setActiveTab(tab.val)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
+                  activeTab === tab.val
+                    ? "bg-primary-600 text-white shadow-xs font-bold"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-navy-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Bookings List */}
