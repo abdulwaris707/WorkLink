@@ -97,13 +97,13 @@ function LoginForm() {
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2 text-center">
           One-Click Demo Accounts
         </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => fillDemoAccount("client@worklink.com")}
             className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-colors"
           >
-            <span className="text-[11px] font-bold text-navy-900 block truncate">Client</span>
+            <span className="text-[11px] font-bold text-navy-900 block truncate">Client Demo</span>
             <span className="text-[10px] text-slate-500 truncate block">client@worklink.com</span>
           </button>
 
@@ -112,17 +112,8 @@ function LoginForm() {
             onClick={() => fillDemoAccount("marcus@worklink.com")}
             className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-colors"
           >
-            <span className="text-[11px] font-bold text-navy-900 block truncate">Worker</span>
+            <span className="text-[11px] font-bold text-navy-900 block truncate">Worker Demo</span>
             <span className="text-[10px] text-slate-500 truncate block">marcus@worklink.com</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fillDemoAccount("admin@worklink.com")}
-            className="p-2 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-left transition-colors"
-          >
-            <span className="text-[11px] font-bold text-purple-900 block truncate">Admin</span>
-            <span className="text-[10px] text-purple-600 truncate block">admin@worklink.com</span>
           </button>
         </div>
       </div>

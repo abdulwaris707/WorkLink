@@ -28,7 +28,44 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protected client routes
+  // 1. Hidden Admin Entry: /jo
+  if (pathname === "/jo") {
+    if (!session) {
+      // Unauthenticated: render the hidden Admin Sign In screen
+      return NextResponse.next();
+    }
+    if (session.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/jo/dashboard", request.url));
+    }
+    // Authenticated non-admin: redirect to their own dashboard, never grant access
+    if (session.role === "WORKER") {
+      return NextResponse.redirect(new URL("/worker", request.url));
+    }
+    return NextResponse.redirect(new URL("/client", request.url));
+  }
+
+  // 2. Hidden Admin Sub-Routes: /jo/*
+  if (pathname.startsWith("/jo/")) {
+    if (!session) {
+      return NextResponse.redirect(new URL("/jo", request.url));
+    }
+    if (session.role !== "ADMIN") {
+      if (session.role === "WORKER") {
+        return NextResponse.redirect(new URL("/worker", request.url));
+      }
+      return NextResponse.redirect(new URL("/client", request.url));
+    }
+  }
+
+  // 3. Legacy /admin redirects safely to /jo
+  if (pathname.startsWith("/admin")) {
+    if (!session || session.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.redirect(new URL("/jo/dashboard", request.url));
+  }
+
+  // 4. Protected client routes
   if (pathname.startsWith("/client")) {
     if (!session) {
       const url = new URL("/login", request.url);
@@ -38,9 +75,12 @@ export async function middleware(request: NextRequest) {
     if (session.role === "WORKER") {
       return NextResponse.redirect(new URL("/worker", request.url));
     }
+    if (session.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/jo/dashboard", request.url));
+    }
   }
 
-  // Protected worker routes
+  // 5. Protected worker routes
   if (pathname.startsWith("/worker")) {
     if (!session) {
       const url = new URL("/login", request.url);
@@ -50,19 +90,20 @@ export async function middleware(request: NextRequest) {
     if (session.role === "CLIENT") {
       return NextResponse.redirect(new URL("/client", request.url));
     }
-  }
-
-  // Protected admin routes
-  if (pathname.startsWith("/admin")) {
-    if (!session || session.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/login?redirect=" + pathname, request.url));
+    if (session.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/jo/dashboard", request.url));
     }
   }
 
-  // Auth pages redirect if already logged in
+  // 6. Public auth pages redirect if already logged in
   if (pathname === "/login" || pathname === "/signup") {
     if (session) {
-      const dest = session.role === "ADMIN" ? "/admin/verifications" : session.role === "WORKER" ? "/worker" : "/client";
+      const dest =
+        session.role === "ADMIN"
+          ? "/jo/dashboard"
+          : session.role === "WORKER"
+          ? "/worker"
+          : "/client";
       return NextResponse.redirect(new URL(dest, request.url));
     }
   }
@@ -71,5 +112,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/client/:path*", "/worker/:path*", "/admin/:path*", "/login", "/signup"],
+  matcher: [
+    "/client/:path*",
+    "/worker/:path*",
+    "/admin/:path*",
+    "/jo",
+    "/jo/:path*",
+    "/login",
+    "/signup",
+  ],
 };

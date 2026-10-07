@@ -69,6 +69,7 @@ export const users = pgTable(
     phone: varchar("phone", { length: 50 }),
     location: varchar("location", { length: 255 }),
     avatarUrl: text("avatar_url"),
+    isSuspended: boolean("is_suspended").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -352,6 +353,10 @@ export const reviews = pgTable(
     comment: text("comment").notNull(),
     workerResponse: text("worker_response"),
     isVerified: boolean("is_verified").default(true).notNull(),
+    isHidden: boolean("is_hidden").default(false).notNull(),
+    moderationReason: text("moderation_reason"),
+    moderatedBy: uuid("moderated_by").references(() => users.id),
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -380,6 +385,65 @@ export const notifications = pgTable(
   (table) => ({
     userIdIdx: index("notifications_user_id_idx").on(table.userId),
     isReadIdx: index("notifications_is_read_idx").on(table.isRead),
+  })
+);
+
+// 13. Reports / Disputes table
+export const reportStatusEnum = pgEnum("report_status", [
+  "PENDING",
+  "INVESTIGATING",
+  "RESOLVED",
+  "DISMISSED",
+]);
+
+export const reports = pgTable(
+  "reports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    reporterId: uuid("reporter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reportedUserId: uuid("reported_user_id").references(() => users.id, { onDelete: "cascade" }),
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
+    reviewId: uuid("review_id").references(() => reviews.id, { onDelete: "cascade" }),
+    reason: varchar("reason", { length: 255 }).notNull(),
+    details: text("details").notNull(),
+    status: reportStatusEnum("status").default("PENDING").notNull(),
+    resolutionNotes: text("resolution_notes"),
+    resolvedBy: uuid("resolved_by").references(() => users.id),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    reporterIdx: index("reports_reporter_idx").on(table.reporterId),
+    reportedUserIdx: index("reports_reported_user_idx").on(table.reportedUserId),
+    statusIdx: index("reports_status_idx").on(table.status),
+  })
+);
+
+// 14. Admin Audit Logs table
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    adminId: uuid("admin_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    action: varchar("action", { length: 100 }).notNull(),
+    targetType: varchar("target_type", { length: 50 }).notNull(),
+    targetId: varchar("target_id", { length: 255 }),
+    details: text("details"),
+    metadata: jsonb("metadata").$type<Record<string, any>>(),
+    ipAddress: varchar("ip_address", { length: 100 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    adminIdIdx: index("admin_audit_logs_admin_id_idx").on(table.adminId),
+    actionIdx: index("admin_audit_logs_action_idx").on(table.action),
+    targetIdx: index("admin_audit_logs_target_idx").on(table.targetType, table.targetId),
+    createdAtIdx: index("admin_audit_logs_created_at_idx").on(table.createdAt),
   })
 );
 
@@ -555,6 +619,39 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [reports.reporterId],
+    references: [users.id],
+    relationName: "reporterUser",
+  }),
+  reportedUser: one(users, {
+    fields: [reports.reportedUserId],
+    references: [users.id],
+    relationName: "reportedUser",
+  }),
+  booking: one(bookings, {
+    fields: [reports.bookingId],
+    references: [bookings.id],
+  }),
+  review: one(reviews, {
+    fields: [reports.reviewId],
+    references: [reviews.id],
+  }),
+  resolver: one(users, {
+    fields: [reports.resolvedBy],
+    references: [users.id],
+    relationName: "resolvedByUser",
+  }),
+}));
+
+export const adminAuditLogsRelations = relations(adminAuditLogs, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminAuditLogs.adminId],
     references: [users.id],
   }),
 }));
